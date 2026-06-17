@@ -1,0 +1,149 @@
+{
+   "appDesc": {
+      "message": "This extension syncs YouTube live streams in real-time by accelerating viewer-delayed streams caused by data reception delays."
+   },
+   "appName": {
+      "message": "Live Sync"
+   },
+   "tagline": {
+      "message": "Keep YouTube live streams in real time"
+   },
+   "sectionMode": {
+      "message": "Mode"
+   },
+   "modesNote": {
+      "message": "Speeds up only enough to cut latency, then rests at 1.0x (which holds the latency). Less buffer = closer to live, but needs a better connection."
+   },
+   "minWarning": {
+      "message": ""
+   },
+   "modeOff": {
+      "message": "Off"
+   },
+   "modeOffDesc": {
+      "message": "Normal playback, no adjustments."
+   },
+   "modeOffConn": {
+      "message": "Any connection"
+   },
+   "modeOffGain": {
+      "message": "—"
+   },
+   "modeAuto": {
+      "message": "Automatic"
+   },
+   "modeAutoDesc": {
+      "message": "Analyzes your connection and adjusts itself: closer to live when your internet can take it, more buffer when it wavers."
+   },
+   "modeAutoConn": {
+      "message": "Any connection (adapts)"
+   },
+   "modeAutoGain": {
+      "message": "adaptive"
+   },
+   "modeSuave": {
+      "message": "Gentle"
+   },
+   "modeSuaveDesc": {
+      "message": "Keeps plenty of buffer and trims latency with room to spare. Best for slow or unstable internet."
+   },
+   "modeSuaveConn": {
+      "message": "Slow or unstable internet (~3+ Mbps)"
+   },
+   "modeSuaveGain": {
+      "message": "buffer ~8s"
+   },
+   "modeBalanced": {
+      "message": "Balanced"
+   },
+   "modeBalancedDesc": {
+      "message": "Cuts latency well while keeping ~6s of buffer. A good middle ground."
+   },
+   "modeBalancedConn": {
+      "message": "Average internet (~5–10 Mbps)"
+   },
+   "modeBalancedGain": {
+      "message": "buffer ~6s"
+   },
+   "modeAggressive": {
+      "message": "Close"
+   },
+   "modeAggressiveDesc": {
+      "message": "Gets closer to live, keeping ~4.5s of buffer. Needs stable internet."
+   },
+   "modeAggressiveConn": {
+      "message": "Stable internet (~15+ Mbps)"
+   },
+   "modeAggressiveGain": {
+      "message": "buffer ~4.5s"
+   },
+   "modeMin": {
+      "message": "Minimum Latency"
+   },
+   "modeMinDesc": {
+      "message": "As close to live as possible, with only ~3.5s of buffer. Needs fast, stable internet."
+   },
+   "modeMinConn": {
+      "message": "Fast, stable internet (~25+ Mbps)"
+   },
+   "modeMinGain": {
+      "message": "buffer ~3.5s"
+   },
+   "sectionIndicators": {
+      "message": "Player indicators"
+   },
+   "showPlaybackRate": {
+      "message": "Display current playback rate"
+   },
+   "showLatency": {
+      "message": "Display current live latency"
+   },
+   "showHealth": {
+      "message": "Display current buffer health"
+   },
+   "reset": {
+      "message": "Restore defaults"
+   },
+   "resetHint": {
+      "message": "Press and hold for 1 second to reset."
+   },
+   "supportTitle": {
+      "message": "Buy me a coffee"
+   },
+   "supportNote": {
+      "message": "Enjoying the extension? Support me with a coffee via PIX (Brazil)."
+   },
+   "supportCustom": {
+      "message": "Other"
+   },
+   "supportCustomPlaceholder": {
+      "message": "Amount in R$"
+   },
+   "supportScan": {
+      "message": "Scan with your bank app, or copy the code:"
+   },
+   "supportCopy": {
+      "message": "Copy PIX code"
+   },
+   "supportCopied": {
+      "message": "Copied!"
+   },
+   "donateNudge": {
+      "message": "Enjoying ZeroDelay? If it helps you, consider supporting it with a coffee — entirely optional. 🙂"
+   },
+   "donateLater": {
+      "message": "Remind me later"
+   },
+   "donateOptOut": {
+      "message": "Don't show again"
+   },
+   "donateBannerText": {
+      "message": "Enjoying ZeroDelay? Support it with a coffee."
+   },
+   "donateBannerCta": {
+      "message": "Support"
+   },
+   "donateBannerClose": {
+      "message": "Close"
+   }
+}

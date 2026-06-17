@@ -1,0 +1,149 @@
+{
+   "appDesc": {
+      "message": "Sincroniza lives do YouTube em tempo real, acelerando a reprodução para reduzir o atraso e manter você perto do ao vivo."
+   },
+   "appName": {
+      "message": "Sincronizador de Live"
+   },
+   "tagline": {
+      "message": "Mantenha as lives do YouTube em tempo real"
+   },
+   "sectionMode": {
+      "message": "Modo"
+   },
+   "modesNote": {
+      "message": "Acelera só o necessário para reduzir a latência e descansa em 1.0x (que segura a latência). Menos buffer = mais perto do ao vivo, mas pede internet melhor."
+   },
+   "minWarning": {
+      "message": ""
+   },
+   "modeOff": {
+      "message": "Desligado"
+   },
+   "modeOffDesc": {
+      "message": "Reprodução normal, sem ajustes."
+   },
+   "modeOffConn": {
+      "message": "Qualquer conexão"
+   },
+   "modeOffGain": {
+      "message": "—"
+   },
+   "modeAuto": {
+      "message": "Automático"
+   },
+   "modeAutoDesc": {
+      "message": "Analisa sua conexão e ajusta sozinho: mais perto do ao vivo quando a internet aguenta, mais buffer quando ela oscila."
+   },
+   "modeAutoConn": {
+      "message": "Qualquer conexão (adapta-se)"
+   },
+   "modeAutoGain": {
+      "message": "adaptável"
+   },
+   "modeSuave": {
+      "message": "Suave"
+   },
+   "modeSuaveDesc": {
+      "message": "Mantém bastante buffer e reduz a latência com folga. Ideal para internet fraca ou instável."
+   },
+   "modeSuaveConn": {
+      "message": "Internet lenta ou instável (~3+ Mbps)"
+   },
+   "modeSuaveGain": {
+      "message": "buffer ~8s"
+   },
+   "modeBalanced": {
+      "message": "Equilibrado"
+   },
+   "modeBalancedDesc": {
+      "message": "Reduz bem a latência mantendo ~6s de buffer. Bom meio-termo."
+   },
+   "modeBalancedConn": {
+      "message": "Internet comum (~5–10 Mbps)"
+   },
+   "modeBalancedGain": {
+      "message": "buffer ~6s"
+   },
+   "modeAggressive": {
+      "message": "Próximo"
+   },
+   "modeAggressiveDesc": {
+      "message": "Chega mais perto do ao vivo, mantendo ~4,5s de buffer. Precisa de internet estável."
+   },
+   "modeAggressiveConn": {
+      "message": "Internet estável (~15+ Mbps)"
+   },
+   "modeAggressiveGain": {
+      "message": "buffer ~4,5s"
+   },
+   "modeMin": {
+      "message": "Latência Mínima"
+   },
+   "modeMinDesc": {
+      "message": "O mais perto possível do ao vivo, com só ~3,5s de buffer. Precisa de internet rápida e estável."
+   },
+   "modeMinConn": {
+      "message": "Internet rápida e estável (~25+ Mbps)"
+   },
+   "modeMinGain": {
+      "message": "buffer ~3,5s"
+   },
+   "sectionIndicators": {
+      "message": "Indicadores no player"
+   },
+   "showPlaybackRate": {
+      "message": "Exibir velocidade de reprodução atual"
+   },
+   "showLatency": {
+      "message": "Exibir latência atual da transmissão ao vivo"
+   },
+   "showHealth": {
+      "message": "Exibir saúde atual do buffer"
+   },
+   "reset": {
+      "message": "Restaurar padrões"
+   },
+   "resetHint": {
+      "message": "Segure por 1 segundo para restaurar."
+   },
+   "supportTitle": {
+      "message": "Me pague um café"
+   },
+   "supportNote": {
+      "message": "Curtiu a extensão? Me ajude com um cafezinho via PIX."
+   },
+   "supportCustom": {
+      "message": "Outro"
+   },
+   "supportCustomPlaceholder": {
+      "message": "Valor em R$"
+   },
+   "supportScan": {
+      "message": "Aponte a câmera do app do seu banco, ou copie o código:"
+   },
+   "supportCopy": {
+      "message": "Copiar código PIX"
+   },
+   "supportCopied": {
+      "message": "Copiado!"
+   },
+   "donateNudge": {
+      "message": "Curtindo o ZeroDelay? Se ele te ajuda, considere apoiar com um café — é totalmente opcional. 🙂"
+   },
+   "donateLater": {
+      "message": "Lembrar depois"
+   },
+   "donateOptOut": {
+      "message": "Não mostrar novamente"
+   },
+   "donateBannerText": {
+      "message": "Curtindo o ZeroDelay? Apoie com um café."
+   },
+   "donateBannerCta": {
+      "message": "Apoiar"
+   },
+   "donateBannerClose": {
+      "message": "Fechar"
+   }
+}
