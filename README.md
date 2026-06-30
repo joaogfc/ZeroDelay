@@ -86,5 +86,16 @@ termos da **Licença Pública Geral GNU v3.0 (GPL-3.0)**, conforme publicada pel
 Free Software Foundation. É distribuído SEM NENHUMA GARANTIA. Veja
 [LICENSE](LICENSE) para o texto completo.
 
+### Trabalho derivado e componentes de terceiros
+
+O ZeroDelay é um **trabalho derivado** da extensão
+[live-catch-up](https://github.com/yudai-tiny-developer/live-catch-up), de
+**yudai-tiny-developer**, originalmente licenciada sob **MIT** e **Apache-2.0**.
+Essas licenças permitem o uso em um trabalho derivado relicenciado sob a GPL-3.0,
+desde que seus avisos sejam preservados.
+
 O gerador de QR Code incluído (`vendor/qrcode.js`) é © 2009 Kazuhiko Arase sob a
-licença MIT, que é compatível com a GPL.
+licença MIT, compatível com a GPL.
+
+Os avisos de licença completos desses componentes estão em
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
