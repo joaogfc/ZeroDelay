@@ -1,4 +1,4 @@
-// ZeroDelay — YouTube live stream latency mitigator
+// ZeroDelay — keep YouTube live streams in real time
 // Author: João Gustavo França <joao@solitus.com.br> (https://github.com/joaogfc)
 
 import * as common from './common.js';
