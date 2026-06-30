@@ -2,12 +2,20 @@
    "action": {
       "default_popup": "popup.html"
    },
-   "author": {
-      "email": "joao@solitus.com.br"
-   },
+   "author": "João Gustavo França <joao@solitus.com.br>",
    "background": {
       "service_worker": "background.js",
+      "scripts": [ "background.js" ],
       "type": "module"
+   },
+   "browser_specific_settings": {
+      "gecko": {
+         "id": "zerodelay@solitus.com.br",
+         "strict_min_version": "140.0",
+         "data_collection_permissions": {
+            "required": [ "none" ]
+         }
+      }
    },
    "content_scripts": [ {
       "all_frames": true,
