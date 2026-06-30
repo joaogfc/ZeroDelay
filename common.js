@@ -1,6 +1,7 @@
 // ZeroDelay — YouTube live stream latency mitigator
 // Author: João Gustavo França <joao@solitus.com.br> (https://github.com/joaogfc)
 
+
 // ---------------------------------------------------------------------------
 // Localized labels
 // ---------------------------------------------------------------------------
