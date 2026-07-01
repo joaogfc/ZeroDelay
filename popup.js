@@ -13,7 +13,7 @@ function el(tag, props = {}, ...children) {
     const node = document.createElement(tag);
     for (const [k, v] of Object.entries(props)) {
         if (k === 'class') node.className = v;
-        else if (k === 'html') node.innerHTML = v;
+        else if (k === 'html') { if (v) node.append(parseSvg(v)); }
         else if (k === 'text') node.textContent = v;
         else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
         else if (v === true) node.setAttribute(k, '');
@@ -21,6 +21,12 @@ function el(tag, props = {}, ...children) {
     }
     for (const c of children) if (c != null) node.append(c);
     return node;
+}
+
+// Parse trusted static SVG markup (our own ICONS / generated QR) into a DOM node,
+// avoiding innerHTML (and the addons-linter UNSAFE_VAR_ASSIGNMENT warning).
+function parseSvg(markup) {
+    return new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
 }
 
 const getStorage = keys => new Promise(res => chrome.storage.local.get(keys, res));
@@ -227,7 +233,8 @@ function renderSupport() {
                     const qr = window.qrcode(0, 'M');
                     qr.addData(code);
                     qr.make();
-                    qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, scalable: true });
+                    qrBox.textContent = '';
+                    qrBox.append(parseSvg(qr.createSvgTag({ cellSize: 4, scalable: true })));
                     qrBox.hidden = false;
                 } catch {
                     qrBox.hidden = true;

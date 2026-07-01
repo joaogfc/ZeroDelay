@@ -2,10 +2,21 @@
 // Author: João Gustavo França <joao@solitus.com.br> (https://github.com/joaogfc)
 
 (() => {
+    // Build "<span translate="no">TEXT</span>" via DOM (no innerHTML). Avoids the
+    // Trusted-Types dependency on YouTube and the addons-linter UNSAFE_VAR_ASSIGNMENT
+    // warning. translate="no" keeps Google Translate from mangling the numbers.
+    function setChip(el, text) {
+        el.textContent = '';
+        const span = document.createElement('span');
+        span.setAttribute('translate', 'no');
+        span.textContent = text;
+        el.appendChild(span);
+    }
+
     function update_playbackRate(playbackRate) {
         const video = video_instance();
         if (video) {
-            button_playbackrate.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${video.playbackRate.toFixed(2)}x</span>`);
+            setChip(button_playbackrate, video.playbackRate.toFixed(2) + 'x');
 
             if (video.playbackRate === playbackRate) {
                 button_playbackrate.style.color = '#ff8983';
@@ -25,9 +36,9 @@
 
     function update_latency(latency, isAtLiveHead) {
         if (isAtLiveHead) {
-            button_latency.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${latency.toFixed(2)}s</span>`);
+            setChip(button_latency, latency.toFixed(2) + 's');
         } else {
-            button_latency.innerHTML = HTMLPolicy.createHTML(`<span translate="no">(DVR)</span>`);
+            setChip(button_latency, '(DVR)');
         }
 
         button_latency.style.display = 'inline-block';
@@ -38,7 +49,7 @@
     }
 
     function update_health(health) {
-        button_health.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${health.toFixed(2)}s</span>`);
+        setChip(button_health, health.toFixed(2) + 's');
 
         // Warn (red) when the buffer is running low.
         if (health < BUFFER_BACKOFF) {
@@ -61,7 +72,7 @@
         const estimated_seconds = (seekableEnd - current) / (streamHasProbablyEnded ? video.playbackRate : video.playbackRate - 1.0);
         if (!isAtLiveHead && isFinite(estimated_seconds)) {
             const estimated_time = new Date(Date.now() + estimated_seconds * 1000.0).toLocaleTimeString();
-            button_estimation.innerHTML = HTMLPolicy.createHTML(`<span translate="no">(${estimated_time})</span>`);
+            setChip(button_estimation, '(' + estimated_time + ')');
             button_estimation.style.display = 'inline-block';
         } else {
             button_estimation.style.display = 'none';
@@ -76,10 +87,10 @@
         const current_time = isFinite(current) ? format_time(current) : '--:--';
 
         if (isAtLiveHead) {
-            button_current.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${current_time}</span>`);
+            setChip(button_current, current_time);
         } else {
             const seekableEnd_time = isFinite(seekableEnd) ? format_time(seekableEnd) : '--:--';
-            button_current.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${current_time} / ${seekableEnd_time}</span>`);
+            setChip(button_current, current_time + ' / ' + seekableEnd_time);
         }
 
         const current_time_url = addParamsToUrl('https://www.youtube.com/watch', { v: videoId, t: format_time_hms(current) });
@@ -289,8 +300,6 @@
         return elem;
     }
 
-    const HTMLPolicy = window.trustedTypes ? window.trustedTypes.createPolicy("_live_catch_up_HTMLPolicy", { createHTML: (string) => string }) : { createHTML: (string) => string };
-
     const button_playbackrate = create_elem('button', ['_live_catch_up_playbackrate', 'ytp-button']);
 
     const button_latency = create_elem('button', ['_live_catch_up_latency', 'ytp-button']);
@@ -300,7 +309,7 @@
     const button_estimation = create_elem('button', ['_live_catch_up_estimation', 'ytp-button']);
 
     const msg_current = create_elem('button', ['_live_catch_up_msg_current', 'ytp-button']);
-    msg_current.innerHTML = HTMLPolicy.createHTML(`<span translate="no">Copied!</span>`);
+    setChip(msg_current, 'Copied!');
     msg_current.style.position = 'fixed';
 
     const button_current = create_elem('button', ['_live_catch_up_current', 'ytp-button']);
@@ -351,7 +360,7 @@
         const settings = e.detail;
         current_settings = settings;
         if (settings.copiedLabel) {
-            msg_current.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${settings.copiedLabel}</span>`);
+            setChip(msg_current, settings.copiedLabel);
         }
         clearInterval(interval);
         showCurrent = settings.showCurrent;

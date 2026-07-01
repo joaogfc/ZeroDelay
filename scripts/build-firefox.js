@@ -21,6 +21,8 @@ const files = [
     'popup.js',
     'popup.css',
     'popup.html',
+    'LICENSE',
+    'THIRD-PARTY-NOTICES.md',
 ];
 
 const dirs = [
