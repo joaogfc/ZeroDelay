@@ -1,0 +1,4 @@
+{
+   "//": "Scopes engine/ to CommonJS so Node treats controller.js as CJS (require + module.exports) even though the root package is ESM. The browser ignores this file and loads controller.js as a classic script.",
+   "type": "commonjs"
+}

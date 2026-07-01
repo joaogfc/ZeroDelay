@@ -6,6 +6,9 @@ web-ext-artifacts/
 # Node tooling for the Firefox build (web-ext)
 node_modules/
 
+# Node tooling (dev-only; installed for lint/CI)
+node_modules/
+
 # OS / editor / cloud cruft
 .DS_Store
 Thumbs.db

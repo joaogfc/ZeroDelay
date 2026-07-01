@@ -5,18 +5,19 @@
 // ---------------------------------------------------------------------------
 // Localized labels
 // ---------------------------------------------------------------------------
+const i18n = (typeof chrome !== 'undefined' && chrome.i18n) ? chrome.i18n : null;
 const msg = (key, fallback) => {
-    const m = chrome.i18n.getMessage(key);
+    const m = i18n ? i18n.getMessage(key) : '';
     return m || fallback || '';
 };
 
 // pt_BR sees PIX; any other browser UI language sees the international donation
 // links instead. Decided automatically — there is no manual switcher.
-export const isBrazil = () => /^pt/i.test(chrome.i18n.getUILanguage() || '');
+export const isBrazil = () => /^pt/i.test((i18n ? i18n.getUILanguage() : '') || '');
 
 export const label = {
     // App
-    appName: msg('appName', 'Sincronizador de Live'),
+    appName: msg('appName', 'ZeroDelay'),
     tagline: msg('tagline', 'Mantenha as lives do YouTube em tempo real'),
 
     // Modes / presets

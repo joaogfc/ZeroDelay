@@ -67,11 +67,19 @@ function main(common) {
 
     document.addEventListener('_live_catch_up_stall', () => onStallDetected(common));
 
-    const s = document.createElement('script');
-    s.id = '_live_catch_up';
-    s.src = chrome.runtime.getURL('inject.js');
-    s.onload = () => s.remove();
-    (document.head || document.documentElement).append(s);
+    // Inject the controller first, then the engine. `async = false` preserves
+    // execution order for dynamically-inserted scripts, so window.ZeroDelay is
+    // ready by the time inject.js runs.
+    const injectScript = file => {
+        const s = document.createElement('script');
+        s.src = chrome.runtime.getURL(file);
+        s.async = false;
+        s.onload = () => s.remove();
+        (document.head || document.documentElement).append(s);
+        return s;
+    };
+    injectScript('engine/controller.js');
+    injectScript('inject.js').id = '_live_catch_up';
 }
 
 // --------------------------------------------------------------- Donation

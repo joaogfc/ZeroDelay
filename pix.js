@@ -25,8 +25,8 @@ function field(id, value) {
 
 // CRC-16/CCITT-FALSE (poly 0x1021, init 0xFFFF) over the payload including the
 // "6304" tag, returned as 4 uppercase hex digits — exactly as the BR Code spec
-// requires.
-function crc16(payload) {
+// requires. Exported so its standard check vector can be unit-tested.
+export function crc16(payload) {
     let crc = 0xffff;
     for (let i = 0; i < payload.length; i++) {
         crc ^= payload.charCodeAt(i) << 8;

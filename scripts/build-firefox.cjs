@@ -17,6 +17,7 @@ const files = [
     'common.js',
     'content.js',
     'inject.js',
+    'engine/controller.js',
     'pix.js',
     'popup.js',
     'popup.css',
@@ -48,7 +49,9 @@ function build() {
     for (const f of files) {
         const src = path.join(root, f);
         if (!fs.existsSync(src)) throw new Error(`missing source file: ${f}`);
-        fs.copyFileSync(src, path.join(out, f));
+        const dst = path.join(out, f);
+        fs.mkdirSync(path.dirname(dst), { recursive: true });
+        fs.copyFileSync(src, dst);
     }
 
     for (const dir of dirs) {

@@ -360,8 +360,8 @@ function renderSupport() {
         const now = Date.now();
         if (!d.donateInstalledAt) chrome.storage.local.set({ donateInstalledAt: now });
         // Opening the popup clears the toolbar dot.
-        try { chrome.action.setBadgeText({ text: '' }); } catch { }
-        try { chrome.runtime.sendMessage({ type: 'donate-seen' }); } catch { }
+        try { chrome.action.setBadgeText({ text: '' }); } catch { /* best-effort; ignore */ }
+        try { chrome.runtime.sendMessage({ type: 'donate-seen' }); } catch { /* best-effort; ignore */ }
 
         if (forceDonate) {
             setOpen(true);
