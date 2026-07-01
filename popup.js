@@ -24,9 +24,12 @@ function el(tag, props = {}, ...children) {
 }
 
 // Parse trusted static SVG markup (our own ICONS / generated QR) into a DOM node,
-// avoiding innerHTML (and the addons-linter UNSAFE_VAR_ASSIGNMENT warning).
+// avoiding innerHTML (and the addons-linter UNSAFE_VAR_ASSIGNMENT warning). Parse
+// as text/html (not image/svg+xml): the HTML parser puts <svg> in the SVG
+// namespace even without an xmlns attribute, so our inline ICONS actually render;
+// image/svg+xml would drop them into the null namespace and they'd stay invisible.
 function parseSvg(markup) {
-    return new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
+    return new DOMParser().parseFromString(markup, 'text/html').body.firstElementChild;
 }
 
 const getStorage = keys => new Promise(res => chrome.storage.local.get(keys, res));

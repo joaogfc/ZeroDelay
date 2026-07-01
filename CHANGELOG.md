@@ -33,6 +33,13 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `1.0x` de forma preventiva quando o buffer está drenando — mesmo ainda alto —
   reduzindo travamentos em redes instáveis (issue #12).
 
+### Corrigido
+
+- Ícones dos modos (e demais glifos SVG do popup) não apareciam — sobrava só o
+  fundo circular. Os SVG inline sem `xmlns` caíam no namespace nulo ao serem
+  parseados como `image/svg+xml`; `parseSvg` agora usa `text/html`, que aplica o
+  namespace SVG corretamente. O QR Code do PIX segue funcionando.
+
 ## [1.1.0] - 2026-06-30
 
 ### Adicionado
