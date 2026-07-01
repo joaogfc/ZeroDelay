@@ -54,3 +54,23 @@ chrome.runtime.onMessage.addListener(msg => {
         chrome.action.setBadgeText({ text: '' });
     }
 });
+
+/**
+ * Handle a keyboard command. The engine only reads `chrome.storage`, so each
+ * shortcut writes storage and content.js/inject.js react to the change.
+ * @param {'toggle-enabled'|'go-live'} command - Command id from the manifest.
+ */
+function onCommand(command) {
+    if (command === 'toggle-enabled') {
+        chrome.storage.local.get([...common.storage, common.lastModeKey], data => {
+            const { apply, remember } = common.toggleEnabledAction(data, data[common.lastModeKey]);
+            const patch = { ...apply };
+            if (remember) patch[common.lastModeKey] = remember;
+            chrome.storage.local.set(patch);
+        });
+    } else if (command === 'go-live') {
+        common.emitGoLive(v => chrome.storage.local.set(v));
+    }
+}
+
+if (chrome.commands?.onCommand) chrome.commands.onCommand.addListener(onCommand);

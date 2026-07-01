@@ -9,6 +9,22 @@
       "service_worker": "background.js",
       "type": "module"
    },
+   "commands": {
+      "toggle-enabled": {
+         "suggested_key": {
+            "default": "Alt+Shift+Y",
+            "mac": "Command+Shift+Y"
+         },
+         "description": "__MSG_commandToggleDesc__"
+      },
+      "go-live": {
+         "suggested_key": {
+            "default": "Alt+Shift+L",
+            "mac": "Command+Shift+L"
+         },
+         "description": "__MSG_commandGoLiveDesc__"
+      }
+   },
    "content_scripts": [ {
       "all_frames": true,
       "js": [ "content.js" ],

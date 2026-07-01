@@ -166,5 +166,11 @@
    },
    "supportCtaBtn": {
       "message": "Support"
+   },
+   "commandToggleDesc": {
+      "message": "Turn ZeroDelay on/off"
+   },
+   "commandGoLiveDesc": {
+      "message": "Jump to live"
    }
 }

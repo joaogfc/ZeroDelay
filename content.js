@@ -51,6 +51,14 @@ function main(common) {
 
     chrome.storage.onChanged.addListener(loadSettings);
 
+    // Forward the "jump to live" storage signal to the engine. Any change to the
+    // nonce means "seek to live now"; the value itself is irrelevant.
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && changes[common.goLiveSignalKey]) {
+            document.dispatchEvent(new CustomEvent('_live_catch_up_go_live'));
+        }
+    });
+
     document.addEventListener('_live_catch_up_init', () => {
         clearInterval(detect_interval);
         detect_interval = setInterval(() => {

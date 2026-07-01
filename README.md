@@ -24,6 +24,9 @@ YouTube.
 - Os controles adicionados se integram à interface padrão do player do YouTube,
   continuando disponíveis até em tela cheia
 - Funciona também no player incorporado do YouTube
+- Atalhos de teclado para ligar/desligar (`Alt+Shift+Y`) e pular para o ao vivo
+  (`Alt+Shift+L`) — `⌘+Shift+…` no Mac —, reconfiguráveis em
+  `chrome://extensions/shortcuts`
 
 ## Configurações
 

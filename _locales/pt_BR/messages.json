@@ -166,5 +166,11 @@
    },
    "supportCtaBtn": {
       "message": "Apoiar via PIX"
+   },
+   "commandToggleDesc": {
+      "message": "Ativar/desativar o ZeroDelay"
+   },
+   "commandGoLiveDesc": {
+      "message": "Pular para o ao vivo"
    }
 }

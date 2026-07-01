@@ -171,6 +171,13 @@
         }
     }
 
+    /** Jump to the live edge on demand (keyboard shortcut / popup chip). No latency threshold — the viewer asked for it. */
+    function seek_to_live() {
+        if (!player || !caps?.seekLive) return;
+        player.seekToLiveHead();
+        if (caps.playVideo) player.playVideo();
+    }
+
     function video_instance() {
         if (!video?.parentNode && player) {
             video = player.querySelector('video.html5-main-video');
@@ -421,6 +428,8 @@
     document.addEventListener('_live_catch_up_reset_playback_rate', () => {
         reset_playbackRate();
     });
+
+    document.addEventListener('_live_catch_up_go_live', seek_to_live);
 
     // --- Player detection + (re)attach (R2) ---------------------------------
     // Runs on first load AND on every SPA navigation (YouTube reuses the tab and

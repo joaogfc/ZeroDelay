@@ -43,7 +43,7 @@ O ponto único de falha era o acoplamento do motor a APIs internas do YouTube, a
 | ✅ H3 | Extrair lógica pura + testes (PIX, modos, controlador) | **P1** | 4–6 h | Alto |
 | ✅ H4 | ESLint + CI (lint/test/build) — *Prettier adiado* | **P1** | 2 h | Médio |
 | ✅ H5 | Remover código morto (`calc_threathold`/`calc_segduration`) | **P1** | 15 min | Baixo |
-| U1 | Atalhos de teclado (`commands`: liga/desliga, ir ao vivo) | P2 | 2 h | Médio |
+| ✅ U1 | Atalhos de teclado (`commands`: liga/desliga, ir ao vivo) | P2 | 2 h | Médio |
 | U2 | A11y: navegação por setas no radiogroup + `aria-label` nos indicadores | P2 | 2 h | Médio |
 | U3 | Suporte a Firefox (`browser_specific_settings`) | P2 | 1–2 h | Médio |
 | U4 | Docs de dev (README dev, CHANGELOG, CONTRIBUTING) | P2 | 2 h | Baixo |
@@ -164,9 +164,13 @@ Maior alavanca de qualidade. Tudo abaixo é determinístico e testável sem DOM:
 
 ## Fase 2 — UX, acessibilidade e recursos (P2)
 
-### U1 — Atalhos de teclado
+### U1 — Atalhos de teclado — ✅ Concluída
 - `commands` no manifest + handler no `background.js`: liga/desliga o modo atual e
   “pular para o ao vivo” sem abrir o popup.
+- **Feito:** `toggle-enabled` (`Alt+Shift+Y` / `⌘+Shift+Y`) alterna entre `off` e o
+  último modo (via `common.toggleEnabledAction` + chave meta `lastMode`); `go-live`
+  (`Alt+Shift+L` / `⌘+Shift+L`) grava um sinal (`common.emitGoLive`) que o
+  `content.js` encaminha ao motor (`seek_to_live`).
 
 ### U2 — Acessibilidade
 - Cards de modo são `role="radio"` (`popup.js:90`) mas sem navegação por setas nem

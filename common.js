@@ -111,6 +111,41 @@ export const storage = ['enabled', 'playbackRate', 'showPlaybackRate', 'showLate
 // user's opt-out / snooze choices.
 // ---------------------------------------------------------------------------
 export const donateKeys = ['donateInstalledAt', 'donateUsageSeconds', 'donateOptOut', 'donateSnoozeUntil', 'donateBannerShown'];
+
+// ---------------------------------------------------------------------------
+// Control/meta keys, driven by the keyboard shortcuts and the "jump to live"
+// chip. Kept out of `storage` (the engine's loadSettings ignores them) and out
+// of `donateKeys` ("Restore defaults" leaves them untouched).
+// ---------------------------------------------------------------------------
+
+/** One-shot "jump to live" nonce; content.js forwards it to the engine. Global by design: every open YouTube tab jumps to live. */
+export const goLiveSignalKey = 'goLiveSignal';
+/** Mode to restore when the toggle shortcut re-enables playback after Off. */
+export const lastModeKey = 'lastMode';
+
+/**
+ * Write a one-shot "jump to live" signal to storage.
+ * @param {(items: Object) => void} setter - `chrome.storage.local.set`, injected so this stays pure and unit-testable.
+ * @param {number} [now] - Nonce value; defaults to `Date.now()`.
+ */
+export function emitGoLive(setter, now = Date.now()) {
+    setter({ [goLiveSignalKey]: now });
+}
+
+/**
+ * Compute the toggle shortcut's action: flip between Off and the last active mode.
+ * @param {Object} data - Resolved settings (as read from storage).
+ * @param {string} [lastMode] - Previously remembered mode name.
+ * @returns {{apply: Object, remember: (string|undefined)}} `apply` is the preset to write; `remember` is the mode to store when turning Off (undefined leaves `lastMode` untouched).
+ */
+export function toggleEnabledAction(data, lastMode) {
+    const mode = deriveMode(data);
+    if (mode === 'off') {
+        const restore = (lastMode && lastMode !== 'off' && presets[lastMode]) ? lastMode : 'auto';
+        return { apply: presets[restore], remember: undefined };
+    }
+    return { apply: presets.off, remember: mode === 'custom' ? undefined : mode };
+}
 export const donateUsageThreshold = 50 * 60;       // ~50 min watching a live (seconds)
 export const donateSnoozeDays = 21;                // "remind me later"
 export const donateSoftSnoozeDays = 3;             // after simply seeing the invite

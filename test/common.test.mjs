@@ -57,3 +57,34 @@ test('isLiveChat detects only the live-chat popout URLs', () => {
     assert.equal(common.isLiveChat('https://www.youtube.com/live_chat_replay?v=abc'), true);
     assert.equal(common.isLiveChat('https://www.youtube.com/watch?v=abc'), false);
 });
+
+test('emitGoLive writes the go-live nonce under its own key', () => {
+    let written = null;
+    common.emitGoLive(v => { written = v; }, 12345);
+    assert.deepEqual(written, { [common.goLiveSignalKey]: 12345 });
+});
+
+test('toggleEnabledAction turns an active mode off and remembers it', () => {
+    const r = common.toggleEnabledAction(common.presets.balanced, undefined);
+    assert.equal(common.deriveMode(r.apply), 'off');
+    assert.equal(r.remember, 'balanced');
+});
+
+test('toggleEnabledAction restores the remembered mode when currently off', () => {
+    const r = common.toggleEnabledAction(common.presets.off, 'suave');
+    assert.equal(common.deriveMode(r.apply), 'suave');
+    assert.equal(r.remember, undefined); // nothing to remember while turning on
+});
+
+test('toggleEnabledAction falls back to auto when off with no memory', () => {
+    assert.equal(common.deriveMode(common.toggleEnabledAction(common.presets.off, undefined).apply), 'auto');
+    assert.equal(common.deriveMode(common.toggleEnabledAction(common.presets.off, 'off').apply), 'auto');
+    assert.equal(common.deriveMode(common.toggleEnabledAction(common.presets.off, 'bogus').apply), 'auto');
+});
+
+test('toggleEnabledAction does not remember an off-grid custom mode', () => {
+    const custom = { enabled: true, auto: false, bufferTarget: 7.0, playbackRate: 1.25, skip: true, skipThreathold: 30 };
+    const r = common.toggleEnabledAction(custom, undefined);
+    assert.equal(common.deriveMode(r.apply), 'off');
+    assert.equal(r.remember, undefined);
+});
