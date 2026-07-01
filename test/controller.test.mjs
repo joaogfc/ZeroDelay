@@ -53,6 +53,34 @@ test('automatic mode raises the target after a near-stall', () => {
         `target should rise after a near-stall (${before} -> ${c.getState().auto_target})`);
 });
 
+test('draining buffer brakes a catch-up pre-emptively (issue #12, scenario B)', () => {
+    const c = createController();
+    // A high but STEADILY DRAINING buffer: level stays above target+band the
+    // whole time (so the level logic alone would keep accelerating), yet the
+    // downward trend means the connection is falling behind -> back off early.
+    let rate;
+    for (let h = 14; h >= 11; h -= 0.15) rate = c.calcPlaybackRate(1.25, 20, h, 6, false);
+    assert.equal(rate, 1.0, 'should refuse to accelerate while the buffer is trending down');
+    assert.ok(c.getState().drain_ema < 0, 'drain_ema should be negative on a falling buffer');
+});
+
+test('brake releases once the buffer recovers (rising trend resumes catch-up)', () => {
+    const c = createController();
+    for (let h = 14; h >= 11; h -= 0.15) c.calcPlaybackRate(1.25, 20, h, 6, false); // drain -> braked
+    let rate;
+    for (let h = 11; h <= 14; h += 0.15) rate = c.calcPlaybackRate(1.25, 20, h, 6, false); // recover
+    assert.equal(rate, 1.25, 'a recovering buffer should resume the catch-up');
+});
+
+test('a brief buffer dip does not latch the brake forever', () => {
+    const c = createController();
+    for (let i = 0; i < 60; i++) c.calcPlaybackRate(1.25, 20, 12, 6, false); // steady catch-up
+    c.calcPlaybackRate(1.25, 20, 11.6, 6, false);                            // one-tick dip
+    let rate;
+    for (let i = 0; i < 40; i++) rate = c.calcPlaybackRate(1.25, 20, 12, 6, false); // steady again
+    assert.equal(rate, 1.25, 'trend EMA should decay back so the catch-up resumes');
+});
+
 test('each controller instance keeps independent state', () => {
     const a = createController();
     const b = createController();

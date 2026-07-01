@@ -23,6 +23,10 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 ### Alterado
 
 - Maior resiliência do motor de catch-up.
+- Controle de catch-up **preditivo**: além do nível do buffer, o motor agora
+  observa a *tendência* (a variação do buffer ao longo do tempo) e recua para
+  `1.0x` de forma preventiva quando o buffer está drenando — mesmo ainda alto —
+  reduzindo travamentos em redes instáveis (issue #12).
 
 ## [1.1.0] - 2026-06-30
 

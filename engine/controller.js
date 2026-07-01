@@ -27,9 +27,12 @@
         const BUFFER_RESUME = 4.0;     // ...and only resume once recovered to this
         const CATCH_UP_BAND = 1.5;     // hysteresis above the target before engaging
         const MIN_LATENCY = 2.0;       // already this close to live -> nothing to gain
+        const DRAIN_BRAKE = -0.02;     // Δbuffer/tick below which we back off pre-emptively
 
         let buffer_headroom_ok = true; // instantaneous-buffer guard state
         let buffer_ema = null;         // smoothed buffer health
+        let last_health = null;        // previous tick's raw buffer health
+        let drain_ema = 0;             // smoothed Δbuffer/tick (draining < 0, filling > 0)
         let catching_up = false;       // currently in a catch-up?
         let auto_target = 6.0;         // automatic-mode buffer target
         let auto_cooldown = 0;         // ticks to wait after a near-stall
@@ -59,12 +62,23 @@
         function calcPlaybackRate(speed, latency, health, bufferTarget, auto) {
             if (!isFinite(health) || !isFinite(latency)) return 1.0;
             buffer_ema = buffer_ema === null ? health : buffer_ema * 0.9 + health * 0.1;
+            // Track the buffer's trend (its first derivative). A steadily
+            // draining buffer means the connection is falling behind real-time,
+            // even while the level still looks healthy — the predictive signal
+            // behind issue #12. Short EMA so old data decays (no hours-long drift).
+            if (last_health !== null) drain_ema = drain_ema * 0.8 + (health - last_health) * 0.2;
+            last_health = health;
             if (latency < MIN_LATENCY) return 1.0; // already at the stream's floor
 
             const target = auto ? auto_buffer_target(health) : bufferTarget;
             if (buffer_ema > target + CATCH_UP_BAND) catching_up = true;
             else if (buffer_ema <= target) catching_up = false;
             if (!catching_up) return 1.0;
+
+            // Pre-emptive brake (issue #12): if the buffer is trending down,
+            // don't push against a connection that's already losing ground —
+            // rest at 1.0x and let it recover BEFORE it dips to a stall.
+            if (drain_ema < DRAIN_BRAKE) return 1.0;
 
             // instantaneous safety guard (prevents deep dips during the catch-up)
             if (health < BUFFER_FLOOR || !accel_allowed_by_buffer(health)) return 1.0;
@@ -73,7 +87,7 @@
 
         // Read-only snapshot of internal state — for tests and diagnostics.
         function getState() {
-            return { buffer_ema, catching_up, auto_target, auto_cooldown, buffer_headroom_ok };
+            return { buffer_ema, drain_ema, catching_up, auto_target, auto_cooldown, buffer_headroom_ok };
         }
 
         // The buffer level below which the UI should warn (red) — exported so the
