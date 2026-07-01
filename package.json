@@ -10,6 +10,7 @@
    "scripts": {
       "test": "node --test",
       "validate": "node scripts/validate.mjs",
+      "check:locales": "node scripts/check-locales.mjs",
       "build": "node scripts/validate.mjs && node scripts/build.mjs",
       "build:firefox": "node scripts/build-firefox.cjs",
       "lint": "eslint .",
