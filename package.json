@@ -1,0 +1,15 @@
+{
+   "name": "zerodelay",
+   "version": "1.1.0",
+   "private": true,
+   "description": "ZeroDelay — Firefox build tooling",
+   "scripts": {
+      "build:firefox": "node scripts/build-firefox.js",
+      "lint:firefox": "npm run build:firefox && web-ext lint --source-dir dist/firefox",
+      "run:firefox": "npm run build:firefox && web-ext run --source-dir dist/firefox",
+      "package:firefox": "npm run build:firefox && web-ext build --source-dir dist/firefox --artifacts-dir web-ext-artifacts --overwrite-dest"
+   },
+   "devDependencies": {
+      "web-ext": "^8.3.0"
+   }
+}
