@@ -16,6 +16,7 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run lint
+      - run: npm run check:locales
       - run: npm test
       - run: npm run build
       - uses: actions/upload-artifact@v4
