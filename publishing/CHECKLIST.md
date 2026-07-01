@@ -3,12 +3,12 @@
 ## Prontos (código e pacote)
 
 - [x] `manifest.json`: sem `update_url` (bloquearia o envio) e sem `key`.
-- [x] `manifest_version: 3`, `name`, `version` (1.0), `description`, `icons` presentes.
+- [x] `manifest_version: 3`, `name`, `version` (1.1), `description`, `icons` presentes.
 - [x] Descrições localizadas com ≤ 132 caracteres (en e pt-BR).
 - [x] Sem código hospedado remotamente (gerador de QR em `vendor/qrcode.js`).
 - [x] Permissões mínimas: `storage`, `alarms` + host `youtube.com` (content script).
 - [x] Licenciado sob GPL-3.0 (`LICENSE`).
-- [x] Pacote gerado: `build/zerodelay-1.0.zip` (manifesto na raiz do ZIP).
+- [x] Pacote gerado por `npm run build` → `build/zerodelay-1.1.zip` (manifesto na raiz do ZIP).
 
 ## Você precisa configurar a conta
 
@@ -26,7 +26,7 @@
 ## Passos do envio
 
 1. Acesse o Painel do Desenvolvedor da Chrome Web Store → **Adicionar novo item**.
-2. Envie **`build/zerodelay-1.0.zip`**.
+2. Gere com `npm run build` e envie **`build/zerodelay-1.1.zip`**.
 3. Preencha a aba **Loja** usando `publishing/STORE_LISTING.md`.
 4. Preencha a aba **Privacidade**: único propósito, as 3 justificativas de
    permissão, "código remoto = Não", divulgações de coleta de dados (nenhuma) +
@@ -37,7 +37,7 @@
 ## Lembretes
 
 - Após enviar, você tem até 30 dias para publicar antes de virar rascunho.
-- **Não é possível publicar uma versão menor que a já publicada.** Esta é a `1.0`;
-  atualizações futuras precisam aumentar a `version` (ex.: `1.0.1`) antes de reenviar.
+- **Não é possível publicar uma versão menor que a já publicada.** Esta é a `1.1`;
+  atualizações futuras precisam aumentar a `version` (ex.: `1.1.1`) antes de reenviar.
 - A chave de manifesto `author` é ignorada pela loja (inofensiva); seu nome de
   desenvolvedor vem da conta.

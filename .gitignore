@@ -1,5 +1,13 @@
 # Build output — the publishable .zip is generated from source, not committed.
 build/
+dist/
+web-ext-artifacts/
+
+# Node tooling for the Firefox build (web-ext)
+node_modules/
+
+# Node tooling (dev-only; installed for lint/CI)
+node_modules/
 
 # OS / editor / cloud cruft
 .DS_Store
