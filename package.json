@@ -1,0 +1,23 @@
+{
+    "name": "zerodelay",
+    "version": "1.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Browser extension that keeps YouTube live streams in real time.",
+    "license": "GPL-3.0-or-later",
+    "author": "João Gustavo França <joao@solitus.com.br>",
+    "homepage": "https://github.com/juansilvadesign/ZeroDelay",
+    "scripts": {
+        "test": "node --test",
+        "validate": "node scripts/validate.mjs",
+        "build": "node scripts/validate.mjs && node scripts/build.mjs",
+        "lint": "eslint .",
+        "version:patch": "node scripts/bump.mjs patch",
+        "version:minor": "node scripts/bump.mjs minor"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.0.0",
+        "eslint": "^9.0.0",
+        "globals": "^15.0.0"
+    }
+}

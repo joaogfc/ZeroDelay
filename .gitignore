@@ -1,6 +1,9 @@
 # Build output — the publishable .zip is generated from source, not committed.
 build/
 
+# Node tooling (dev-only; installed for lint/CI)
+node_modules/
+
 # OS / editor / cloud cruft
 .DS_Store
 Thumbs.db

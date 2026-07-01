@@ -2,6 +2,16 @@
 // Author: João Gustavo França <joao@solitus.com.br> (https://github.com/joaogfc)
 
 (() => {
+    // Catch-up control logic lives in engine/controller.js (a classic script
+    // injected just before this one) — unit-tested in test/controller.test.mjs.
+    // If it somehow didn't load, we stay safely at 1.0x (no acceleration).
+    const controller = (typeof window !== 'undefined' && window.ZeroDelay && typeof window.ZeroDelay.createController === 'function')
+        ? window.ZeroDelay.createController()
+        : null;
+    // Buffer level below which the health indicator turns red — shared with the
+    // controller's own back-off threshold (falls back if the controller is absent).
+    const BUFFER_WARN = controller ? controller.WARN_BUFFER : 2.5;
+
     function update_playbackRate(playbackRate) {
         const video = video_instance();
         if (video) {
@@ -41,7 +51,7 @@
         button_health.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${health.toFixed(2)}s</span>`);
 
         // Warn (red) when the buffer is running low.
-        if (health < BUFFER_BACKOFF) {
+        if (health < BUFFER_WARN) {
             button_health.style.color = '#ff8983';
         } else {
             button_health.style.color = '#eee';
@@ -121,7 +131,8 @@
     }
 
     function set_playbackRate(speed, latency, health, bufferTarget, auto) {
-        apply_playback_rate(calc_playbackRate(speed, latency, health, bufferTarget, auto));
+        if (!controller) return;
+        apply_playback_rate(controller.calcPlaybackRate(speed, latency, health, bufferTarget, auto));
     }
 
     function reset_playbackRate() {
@@ -130,84 +141,10 @@
         }
     }
 
-    // --- Buffer-aware catch-up ----------------------------------------------
-    // Speeding up consumes the buffered-ahead content, pulling the playhead
-    // toward real time, which REDUCES live latency. Playing at 1.0x then HOLDS
-    // that latency (verified on real streams). So we only need brief catch-ups,
-    // not constant acceleration. We watch a SMOOTHED buffer level: while it sits
-    // comfortably above the mode's target we speed up; once it falls to the
-    // target we stop and rest. Falling behind (a stall) piles buffer up ahead,
-    // raising the smoothed level and triggering a fresh, short catch-up. This is
-    // self-limiting and naturally adapts to what the connection can sustain.
-    const BUFFER_FLOOR = 1.5;      // never speed up below this (stall protection)
-    const BUFFER_BACKOFF = 2.5;    // ease off here...
-    const BUFFER_RESUME = 4.0;     // ...and only resume once recovered to this
-    const CATCH_UP_BAND = 1.5;     // hysteresis above the target before engaging
-    const MIN_LATENCY = 2.0;       // already this close to live -> nothing to gain
-    let buffer_headroom_ok = true; // instantaneous-buffer guard state
-    let buffer_ema = null;         // smoothed buffer health
-    let catching_up = false;       // currently in a catch-up?
-
-    function accel_allowed_by_buffer(health) {
-        if (!isFinite(health)) return false;
-        if (health <= BUFFER_BACKOFF) buffer_headroom_ok = false;
-        else if (health >= BUFFER_RESUME) buffer_headroom_ok = true;
-        return buffer_headroom_ok;
-    }
-
-    // Automatic mode: adapt the buffer target to the connection over time.
-    let auto_target = 6.0;
-    let auto_cooldown = 0;
-    function auto_buffer_target(health) {
-        if (isFinite(health) && health < 1.0) {            // a near-stall just happened
-            auto_target = Math.min(9.0, auto_target + 1.0);  // back off: keep more buffer
-            auto_cooldown = 240;                             // ~60s at 250ms
-        } else if (auto_cooldown > 0) {
-            auto_cooldown--;
-        } else if (buffer_ema !== null && buffer_ema > auto_target + 2.0) {
-            auto_target = Math.max(4.0, auto_target - 0.01); // calm -> creep closer to live
-        }
-        return auto_target;
-    }
-
-    function calc_playbackRate(speed, latency, health, bufferTarget, auto) {
-        if (!isFinite(health) || !isFinite(latency)) return 1.0;
-        buffer_ema = buffer_ema === null ? health : buffer_ema * 0.9 + health * 0.1;
-        if (latency < MIN_LATENCY) return 1.0; // already at the stream's floor
-
-        const target = auto ? auto_buffer_target(health) : bufferTarget;
-        if (buffer_ema > target + CATCH_UP_BAND) catching_up = true;
-        else if (buffer_ema <= target) catching_up = false;
-        if (!catching_up) return 1.0;
-
-        // instantaneous safety guard (prevents deep dips during the catch-up)
-        if (health < BUFFER_FLOOR || !accel_allowed_by_buffer(health)) return 1.0;
-        return speed;
-    }
-
-    function calc_threathold() {
-        if (player) {
-            return (player.getVideoStats ? player.getVideoStats().segduration : calc_segduration());
-        } else {
-            return 5.0;
-        }
-    }
-
-    function calc_segduration() {
-        if (player) {
-            const latencyClass = player.getPlayerResponse ? player.getPlayerResponse().videoDetails.latencyClass : 'MDE_STREAM_OPTIMIZATIONS_RENDERER_LATENCY_UNKNOWN';
-            switch (latencyClass) {
-                case 'MDE_STREAM_OPTIMIZATIONS_RENDERER_LATENCY_ULTRA_LOW':
-                    return 1.0;
-                case 'MDE_STREAM_OPTIMIZATIONS_RENDERER_LATENCY_LOW':
-                    return 2.0;
-                default:
-                    return 5.0;
-            }
-        } else {
-            return 5.0;
-        }
-    }
+    // Catch-up control logic + its tunables/state now live in
+    // engine/controller.js (unit-tested via test/controller.test.mjs). The dead
+    // helpers calc_threathold / calc_segduration were removed here — nothing
+    // ever called them.
 
     function onPlaybackRateChange() {
         document.dispatchEvent(new CustomEvent('_live_catch_up_onPlaybackRateChange'));
@@ -323,7 +260,6 @@
     let interval_count = 0;
     let seekableEnds = [];
     let msg_current_timeout;
-    let showCurrent;
     let current_settings;
     let last_active_ping = 0;
 
@@ -465,7 +401,6 @@
             msg_current.innerHTML = HTMLPolicy.createHTML(`<span translate="no">${settings.copiedLabel}</span>`);
         }
         clearInterval(interval);
-        showCurrent = settings.showCurrent;
         if (settings.enabled || settings.skip || settings.showPlaybackRate || settings.showLatency || settings.showHealth || settings.showEstimation || settings.showCurrent) {
             interval = setInterval(guarded_tick, 250);
         } else {

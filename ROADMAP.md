@@ -15,8 +15,19 @@
 - `popup.js` / `background.js` / `pix.js` — UI de ajustes, service worker (badge de
   doação) e gerador de PIX (BR Code) local.
 
-O ponto único de falha é o acoplamento do motor a APIs internas do YouTube, hoje
-**sem nenhuma proteção**. Este plano prioriza blindar isso antes de recursos novos.
+O ponto único de falha era o acoplamento do motor a APIs internas do YouTube, antes
+**sem nenhuma proteção** — blindado na Fase 0. As Fases 0 e 1 estão concluídas.
+
+---
+
+## Estado atual (2026-07-01)
+
+- **Fase 0 — Resiliência do motor:** ✅ concluída (2026-06-30) — R1–R3.
+- **Fase 1 — Higiene de release + testes:** ✅ concluída (2026-07-01) — H1–H5.
+- **Próximo:** Fase 2 (U1–U5) — atalhos de teclado, a11y, Firefox, docs de dev.
+- **Saúde do projeto:** `manifest` v1.1 · **21 testes** `node:test` verdes · ESLint
+  (flat, v9) **limpo** · `npm run build` → `build/zerodelay-1.1.zip` (19 arquivos,
+  manifesto na raiz, verificado por um leitor de ZIP independente).
 
 ---
 
@@ -27,11 +38,11 @@ O ponto único de falha é o acoplamento do motor a APIs internas do YouTube, ho
 | ✅ R1 | `try/catch` + feature-detect no laço do motor | **P0** | 2–3 h | Alto |
 | ✅ R2 | Re-detecção em navegação SPA (`yt-navigate-finish`) | **P0** | 2 h | Alto |
 | ✅ R3 | Degradação visível quando as APIs somem | **P0** | 1 h | Médio |
-| H1 | `package.json` + script de build/zip + version-stamp | **P1** | 2–3 h | Alto |
-| H2 | Reconciliar versão (1.1 vs 1.0) e marca (“Live Sync” → ZeroDelay) | **P1** | 30 min | Médio |
-| H3 | Extrair lógica pura + testes (PIX, modos, controlador) | **P1** | 4–6 h | Alto |
-| H4 | ESLint + Prettier + CI (lint/test/build) | **P1** | 2 h | Médio |
-| H5 | Remover código morto (`calc_threathold`/`calc_segduration`) | **P1** | 15 min | Baixo |
+| ✅ H1 | `package.json` + script de build/zip + version-stamp | **P1** | 2–3 h | Alto |
+| ✅ H2 | Reconciliar versão (1.1 vs 1.0) e marca (“Live Sync” → ZeroDelay) | **P1** | 30 min | Médio |
+| ✅ H3 | Extrair lógica pura + testes (PIX, modos, controlador) | **P1** | 4–6 h | Alto |
+| ✅ H4 | ESLint + CI (lint/test/build) — *Prettier adiado* | **P1** | 2 h | Médio |
+| ✅ H5 | Remover código morto (`calc_threathold`/`calc_segduration`) | **P1** | 15 min | Baixo |
 | U1 | Atalhos de teclado (`commands`: liga/desliga, ir ao vivo) | P2 | 2 h | Médio |
 | U2 | A11y: navegação por setas no radiogroup + `aria-label` nos indicadores | P2 | 2 h | Médio |
 | U3 | Suporte a Firefox (`browser_specific_settings`) | P2 | 1–2 h | Médio |
@@ -47,8 +58,7 @@ O ponto único de falha é o acoplamento do motor a APIs internas do YouTube, ho
 > do player (desiste após 8 erros seguidos, com 1 aviso no console), re-detecção
 > idempotente em navegação SPA (`yt-navigate-finish`) e indicadores que somem na
 > degradação (nunca deixam valores congelados). Escopo: só `inject.js`
-> (+166 −64). Não commitado; `manifest` segue em `1.1`.
-
+> (+166 −64).
 O valor inteiro da extensão vive dentro de um `setInterval` de 250 ms
 (`inject.js:359-399`) que chama APIs não documentadas do YouTube. Qualquer
 refatoração do player derruba tudo — 4×/segundo, para sempre, sem sinal.
@@ -89,7 +99,18 @@ refatoração do player derruba tudo — 4×/segundo, para sempre, sem sinal.
 
 ---
 
-## Fase 1 — Higiene de release e manutenção (P1)
+## Fase 1 — Higiene de release e manutenção (P1) — ✅ Concluída
+
+> **✅ Concluída em 2026-07-01 — Higiene de release + testes.**
+> Código morto removido (H5); versão/marca reconciliadas — o popup agora é
+> “ZeroDelay” (H2); `package.json` + build **zero-dependência** em Node puro
+> (`node:zlib`, sem binário `zip`) que gera `build/zerodelay-1.1.zip` com o
+> manifesto na raiz, mais um `validate` do manifest (H1); o controlador de
+> catch-up foi extraído para `engine/controller.js` (dual Node/browser via
+> `engine/package.json`) e coberto por **21 testes** `node:test` — PIX/CRC,
+> modos e controlador, todos verdes (H3); ESLint flat config + CI no GitHub
+> Actions (H4; Prettier adiado). O build foi verificado por um leitor de ZIP
+> independente (CRCs OK, manifesto na raiz, sem vazar `.git`/dev).
 
 ### H1 — Build reprodutível
 - **Problema:** o `CHECKLIST.md:11` cita `build/zerodelay-1.0.zip`, mas **não há
@@ -175,9 +196,9 @@ Maior alavanca de qualidade. Tudo abaixo é determinístico e testável sem DOM:
 ## Ordem de execução sugerida
 
 1. ~~**R1 → R2 → R3** (blindar o motor)~~ — ✅ concluída em 2026-06-30.
-2. **H5 + H2** (limpeza rápida de baixo risco).
-3. **H1 + H4** (build + CI para travar regressões).
-4. **H3** (extrair e testar — depende de H1/H4 para valer a pena).
+2. ~~**H5 + H2** (limpeza rápida de baixo risco)~~ — ✅ concluída em 2026-07-01.
+3. ~~**H1 + H4** (build + CI para travar regressões)~~ — ✅ concluída em 2026-07-01.
+4. ~~**H3** (extrair e testar)~~ — ✅ concluída em 2026-07-01.
 5. **U1–U5** conforme apetite.
 
 ## O que já está bom (não mexer)
