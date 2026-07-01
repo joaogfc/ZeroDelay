@@ -171,6 +171,14 @@
         }
     }
 
+    // Manual "go to live" (keyboard shortcut). Unlike the automatic skip above it
+    // runs on demand regardless of mode or latency, so it works even when off.
+    function go_to_live_head() {
+        if (!caps?.seekLive || !player) return;
+        player.seekToLiveHead();
+        if (caps.playVideo) player.playVideo();
+    }
+
     function video_instance() {
         if (!video?.parentNode && player) {
             video = player.querySelector('video.html5-main-video');
@@ -421,6 +429,8 @@
     document.addEventListener('_live_catch_up_reset_playback_rate', () => {
         reset_playbackRate();
     });
+
+    document.addEventListener('_live_catch_up_go_live', go_to_live_head);
 
     // --- Player detection + (re)attach (R2) ---------------------------------
     // Runs on first load AND on every SPA navigation (YouTube reuses the tab and

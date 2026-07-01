@@ -259,6 +259,25 @@ export function deriveMode(d) {
     return 'custom';
 }
 
+// ---------------------------------------------------------------------------
+// Global keyboard shortcut — on/off toggle (handled in background.js). This key
+// lives OUTSIDE `storage` so the engine ignores it and "Restore defaults" keeps
+// it; it only remembers which mode to restore when turning back on.
+// ---------------------------------------------------------------------------
+export const lastEnabledModeKey = 'lastEnabledMode';
+
+// Decide what the on/off shortcut should do. Returns the preset to apply and,
+// when turning off, the mode to remember. Turning off applies presets.off (which
+// also clears skip), so the engine truly stops instead of still seeking to live.
+export function toggleEnabled(current, lastMode) {
+    if (value(current.enabled, defaultEnabled)) {
+        const mode = deriveMode(current);
+        return { apply: presets.off, remember: presets[mode] && mode !== 'off' ? mode : null };
+    }
+    const restore = presets[lastMode] && lastMode !== 'off' ? lastMode : 'auto';
+    return { apply: presets[restore], remember: null };
+}
+
 export function value(value, default_value) {
     return value ?? default_value;
 }

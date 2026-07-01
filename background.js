@@ -54,3 +54,28 @@ chrome.runtime.onMessage.addListener(msg => {
         chrome.action.setBadgeText({ text: '' });
     }
 });
+
+// --- Keyboard shortcuts (see `commands` in the manifest) ------------------
+// "toggle-enabled" flips on/off via storage — the content script reacts through
+// storage.onChanged. "go-live" is relayed to the active tab, where the engine
+// (page world) seeks to the live edge.
+function applyToggle() {
+    chrome.storage.local.get([...common.storage, common.lastEnabledModeKey], d => {
+        const { apply, remember } = common.toggleEnabled(d, d[common.lastEnabledModeKey]);
+        chrome.storage.local.set(remember ? { ...apply, [common.lastEnabledModeKey]: remember } : apply);
+    });
+}
+
+function sendGoLive(tab) {
+    const send = t => {
+        if (t?.id == null) return;
+        chrome.tabs.sendMessage(t.id, { type: 'go-live' }, () => void chrome.runtime.lastError);
+    };
+    if (tab) send(tab);
+    else chrome.tabs.query({ active: true, currentWindow: true }, tabs => send(tabs[0]));
+}
+
+chrome.commands.onCommand.addListener((command, tab) => {
+    if (command === 'toggle-enabled') applyToggle();
+    else if (command === 'go-live') sendGoLive(tab);
+});

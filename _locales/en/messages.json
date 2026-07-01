@@ -166,5 +166,11 @@
    },
    "supportCtaBtn": {
       "message": "Support"
+   },
+   "cmdToggleEnabled": {
+      "message": "Turn ZeroDelay on or off"
+   },
+   "cmdGoLive": {
+      "message": "Jump to the live edge"
    }
 }

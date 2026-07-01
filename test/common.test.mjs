@@ -52,6 +52,31 @@ test('calmerMode steps toward more buffer and stops at the calmest', () => {
     assert.equal(common.calmerMode('off'), null);
 });
 
+test('toggleEnabled turns an active mode off and remembers it', () => {
+    const { apply, remember } = common.toggleEnabled(common.presets.suave, undefined);
+    assert.deepEqual(apply, common.presets.off);
+    assert.equal(remember, 'suave');
+});
+
+test('toggleEnabled restores the remembered mode when turning back on', () => {
+    const { apply, remember } = common.toggleEnabled(common.presets.off, 'min');
+    assert.deepEqual(apply, common.presets.min);
+    assert.equal(remember, null);
+});
+
+test('toggleEnabled falls back to auto with no (or invalid) remembered mode', () => {
+    assert.deepEqual(common.toggleEnabled(common.presets.off, undefined).apply, common.presets.auto);
+    assert.deepEqual(common.toggleEnabled(common.presets.off, 'nope').apply, common.presets.auto);
+    assert.deepEqual(common.toggleEnabled(common.presets.off, 'off').apply, common.presets.auto);
+});
+
+test('toggleEnabled turns off a custom (unremembered) state without a mode to restore', () => {
+    const custom = { enabled: true, auto: false, bufferTarget: 7.0, playbackRate: 1.25, skip: true, skipThreathold: 30 };
+    const { apply, remember } = common.toggleEnabled(custom, undefined);
+    assert.deepEqual(apply, common.presets.off);
+    assert.equal(remember, null);
+});
+
 test('isLiveChat detects only the live-chat popout URLs', () => {
     assert.equal(common.isLiveChat('https://www.youtube.com/live_chat?v=abc'), true);
     assert.equal(common.isLiveChat('https://www.youtube.com/live_chat_replay?v=abc'), true);

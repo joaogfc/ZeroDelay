@@ -67,6 +67,19 @@ vivo):
 - `Exibir latência atual da transmissão ao vivo`
 - `Exibir saúde atual do buffer`
 
+## Atalhos de teclado
+
+Duas ações ficam disponíveis por atalho, sem precisar abrir o popup:
+
+| Atalho padrão | Ação |
+| --- | --- |
+| `Alt+Shift+Z` | Liga/desliga o ZeroDelay (volta ao último modo ao religar) |
+| `Alt+Shift+L` | Pula direto para o ao vivo |
+
+Os atalhos podem ser personalizados na página de atalhos do navegador
+(`chrome://extensions/shortcuts` no Chrome; **Gerenciar extensões → Gerenciar
+atalhos** no Firefox).
+
 ## Contribuindo
 
 Contribuições são bem-vindas! Veja o [CONTRIBUTING.md](CONTRIBUTING.md) para

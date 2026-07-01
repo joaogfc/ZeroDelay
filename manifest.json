@@ -9,6 +9,20 @@
       "service_worker": "background.js",
       "type": "module"
    },
+   "commands": {
+      "toggle-enabled": {
+         "suggested_key": {
+            "default": "Alt+Shift+Z"
+         },
+         "description": "__MSG_cmdToggleEnabled__"
+      },
+      "go-live": {
+         "suggested_key": {
+            "default": "Alt+Shift+L"
+         },
+         "description": "__MSG_cmdGoLive__"
+      }
+   },
    "content_scripts": [ {
       "all_frames": true,
       "js": [ "content.js" ],

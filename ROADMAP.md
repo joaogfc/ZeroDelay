@@ -24,7 +24,8 @@ O ponto único de falha era o acoplamento do motor a APIs internas do YouTube, a
 
 - **Fase 0 — Resiliência do motor:** ✅ concluída (2026-06-30) — R1–R3.
 - **Fase 1 — Higiene de release + testes:** ✅ concluída (2026-07-01) — H1–H5.
-- **Próximo:** Fase 2 (U1–U5) — atalhos de teclado, a11y, Firefox, docs de dev.
+- **Fase 2 — parcial:** ✅ U1 (atalhos), ✅ U3 (Firefox), ✅ U4 (docs de dev).
+- **Próximo:** Fase 2 restante — U2 (a11y) e U5 (memória por canal).
 - **Saúde do projeto:** `manifest` v1.1 · **21 testes** `node:test` verdes · ESLint
   (flat, v9) **limpo** · `npm run build` → `build/zerodelay-1.1.zip` (19 arquivos,
   manifesto na raiz, verificado por um leitor de ZIP independente).
@@ -43,7 +44,7 @@ O ponto único de falha era o acoplamento do motor a APIs internas do YouTube, a
 | ✅ H3 | Extrair lógica pura + testes (PIX, modos, controlador) | **P1** | 4–6 h | Alto |
 | ✅ H4 | ESLint + CI (lint/test/build) — *Prettier adiado* | **P1** | 2 h | Médio |
 | ✅ H5 | Remover código morto (`calc_threathold`/`calc_segduration`) | **P1** | 15 min | Baixo |
-| U1 | Atalhos de teclado (`commands`: liga/desliga, ir ao vivo) | P2 | 2 h | Médio |
+| ✅ U1 | Atalhos de teclado (`commands`: liga/desliga, ir ao vivo) | P2 | 2 h | Médio |
 | U2 | A11y: navegação por setas no radiogroup + `aria-label` nos indicadores | P2 | 2 h | Médio |
 | U3 | Suporte a Firefox (`browser_specific_settings`) | P2 | 1–2 h | Médio |
 | U4 | Docs de dev (README dev, CHANGELOG, CONTRIBUTING) | P2 | 2 h | Baixo |
@@ -164,9 +165,13 @@ Maior alavanca de qualidade. Tudo abaixo é determinístico e testável sem DOM:
 
 ## Fase 2 — UX, acessibilidade e recursos (P2)
 
-### U1 — Atalhos de teclado
-- `commands` no manifest + handler no `background.js`: liga/desliga o modo atual e
-  “pular para o ao vivo” sem abrir o popup.
+### U1 — Atalhos de teclado — ✅ Concluída
+- `commands` no manifest (Chrome + Firefox) + handler no `background.js`:
+  `toggle-enabled` (`Alt+Shift+Z`) alterna on/off via storage, lembrando o último
+  modo (`lastEnabledMode`) para religar no mesmo; `go-live` (`Alt+Shift+L`) é
+  repassado à aba ativa e chama `seekToLiveHead()` no motor. Lógica de toggle
+  extraída para `common.toggleEnabled` (pura, coberta por testes). Sem novas
+  permissões.
 
 ### U2 — Acessibilidade
 - Cards de modo são `role="radio"` (`popup.js:90`) mas sem navegação por setas nem

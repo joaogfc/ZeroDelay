@@ -51,6 +51,12 @@ function main(common) {
 
     chrome.storage.onChanged.addListener(loadSettings);
 
+    // Relay the "go to live" keyboard shortcut from the service worker into the
+    // page world, where the engine can call the player's seekToLiveHead().
+    chrome.runtime.onMessage.addListener(msg => {
+        if (msg?.type === 'go-live') document.dispatchEvent(new CustomEvent('_live_catch_up_go_live'));
+    });
+
     document.addEventListener('_live_catch_up_init', () => {
         clearInterval(detect_interval);
         detect_interval = setInterval(() => {
