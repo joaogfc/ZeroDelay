@@ -14,6 +14,7 @@ const SKIP_FILES = new Set([
     '.gitignore', '.gitattributes', '.DS_Store', 'Thumbs.db', 'desktop.ini',
     'ROADMAP.md', 'eslint.config.mjs', 'package.json', 'package-lock.json',
     'manifest.firefox.json', 'README.md', 'CONTRIBUTORS.md',
+    'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md',
 ]);
 
 function* walk(dir) {
