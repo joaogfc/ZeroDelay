@@ -102,7 +102,7 @@
     let yielded_to_user = false;
 
     function apply_playback_rate(desired) {
-        if (!player?.setPlaybackRate) return;
+        if (!player?.setPlaybackRate || !player?.getPlaybackRate) return;
         const cur = player.getPlaybackRate();
         if (Math.abs(cur - applied_rate) > 0.01) {
             if (Math.abs(cur - 1.0) < 0.01) {
@@ -214,10 +214,11 @@
     }
 
     function skip_if_over_threathold(latency, skipThreathold) {
+        if (!caps?.seekLive || !caps?.stateObject) return;
         if (player && latency >= skipThreathold) {
             if (player.getPlayerStateObject()?.isPlaying) {
                 player.seekToLiveHead();
-                player.playVideo();
+                if (caps.playVideo) player.playVideo();
             }
         }
     }
@@ -326,6 +327,17 @@
     let current_settings;
     let last_active_ping = 0;
 
+    // --- Resilience state (R1/R2/R3) ----------------------------------------
+    // The engine drives entirely off UNDOCUMENTED player methods. `caps` records
+    // which ones actually exist (probed once per attach); the hot loop is guarded
+    // so a YouTube-side refactor degrades gracefully instead of throwing 4x/sec.
+    let caps = null;              // probed player capabilities (or null)
+    let engine_degraded = false;  // gave up until the next navigation
+    let tick_errors = 0;          // consecutive errors in the hot loop
+    let bound_video = null;       // video element we've attached listeners to
+    let detect_interval = null;   // player-detection poll (managed by start_detection)
+    const MAX_TICK_ERRORS = 8;    // ~2s of failures in a row before giving up
+
     // --- Stall watchdog ------------------------------------------------------
     // If the live keeps buffering while the extension is enabled, the chosen
     // mode is probably too aggressive for this connection. We notify the content
@@ -347,6 +359,105 @@
         }
     }
 
+    // --- Resilience helpers (R1/R3) -----------------------------------------
+    // Probe the private player API surface once, so a missing method is a known
+    // "skip that feature" instead of a per-tick exception.
+    function probe_caps(p) {
+        const has = name => typeof p?.[name] === 'function';
+        return {
+            stats: has('getStatsForNerds'),
+            progress: has('getProgressState'),
+            videoData: has('getVideoData'),
+            setRate: has('setPlaybackRate'),
+            getRate: has('getPlaybackRate'),
+            seekLive: has('seekToLiveHead'),
+            playVideo: has('playVideo'),
+            stateObject: has('getPlayerStateObject'),
+        };
+    }
+
+    function hideAllIndicators() {
+        hide_playbackRate();
+        hide_latency();
+        hide_health();
+        hide_estimation();
+        hide_current();
+    }
+
+    // Give up until the next navigation, once, without spamming the console. A
+    // fresh (re)attach — initial load or SPA nav — clears this and retries.
+    function degrade(reason) {
+        if (engine_degraded) return;
+        engine_degraded = true;
+        clearInterval(interval);
+        hideAllIndicators();
+        console.warn(`[ZeroDelay] Paused: the YouTube player API looks different (${reason}). It will retry on the next video/navigation.`);
+    }
+
+    // One iteration of the hot loop, always called inside guarded_tick's
+    // try/catch. Every private-API call is gated by `caps`; when the stats say
+    // this isn't a catch-up-able live, indicators are hidden (never left stale).
+    function run_tick(settings) {
+        if (!caps || !caps.stats) { degrade('getStatsForNerds missing'); return; }
+
+        const stats_for_nerds = player.getStatsForNerds();
+        if (!stats_for_nerds || stats_for_nerds.live_latency_style !== '') {
+            hideAllIndicators();
+            return;
+        }
+
+        const latency = Number.parseFloat(stats_for_nerds.live_latency_secs);
+        const health = Number.parseFloat(stats_for_nerds.buffer_health_seconds);
+        const progress_state = caps.progress ? player.getProgressState() : null;
+
+        // Throttled "watching a live" ping — drives usage tracking in the
+        // content script (so only real live time counts).
+        const active_now = Date.now();
+        if (active_now - last_active_ping > 2000) {
+            last_active_ping = active_now;
+            document.dispatchEvent(new CustomEvent('_live_catch_up_active'));
+        }
+
+        if (caps.setRate && caps.getRate) {
+            settings.enabled
+                ? set_playbackRate(settings.playbackRate, latency, health, settings.bufferTarget, settings.auto)
+                : reset_playbackRate();
+        }
+
+        if (settings.skip) {
+            skip_if_over_threathold(latency, settings.skipThreathold);
+        }
+
+        const want_update = interval_count++ % 4 === 0;
+        settings.showPlaybackRate ? update_playbackRate(settings.playbackRate) : hide_playbackRate();
+        if (progress_state) {
+            settings.showLatency ? (want_update && update_latency(latency, progress_state.isAtLiveHead)) : hide_latency();
+            settings.showHealth ? (want_update && update_health(health)) : hide_health();
+            settings.showEstimation ? (want_update && update_estimation(progress_state.seekableEnd, progress_state.current, progress_state.isAtLiveHead)) : hide_estimation();
+            settings.showCurrent ? update_current(progress_state.current, progress_state.seekableEnd, progress_state.isAtLiveHead, caps.videoData ? player.getVideoData()?.video_id : undefined) : hide_current();
+        } else {
+            hide_latency();
+            hide_health();
+            hide_estimation();
+            hide_current();
+        }
+    }
+
+    // Guards the 4x/second loop: a single YouTube-side change can't spin
+    // exceptions forever — after MAX_TICK_ERRORS in a row we stop and wait for
+    // the next navigation to retry (see degrade / detect_and_attach).
+    function guarded_tick() {
+        if (!player || engine_degraded) return;
+        const settings = current_settings;
+        if (!settings) return;
+        try {
+            run_tick(settings);
+            tick_errors = 0;
+        } catch (e) {
+            if (++tick_errors >= MAX_TICK_ERRORS) degrade(e?.message || 'exception');
+        }
+    }
+
     document.addEventListener('_live_catch_up_load_settings', e => {
         const settings = e.detail;
         current_settings = settings;
@@ -356,54 +467,10 @@
         clearInterval(interval);
         showCurrent = settings.showCurrent;
         if (settings.enabled || settings.skip || settings.showPlaybackRate || settings.showLatency || settings.showHealth || settings.showEstimation || settings.showCurrent) {
-            interval = setInterval(() => {
-                if (player) {
-                    const stats_for_nerds = player.getStatsForNerds();
-                    if (stats_for_nerds.live_latency_style === '') {
-                        const latency = Number.parseFloat(stats_for_nerds.live_latency_secs);
-                        const health = Number.parseFloat(stats_for_nerds.buffer_health_seconds);
-                        const progress_state = player.getProgressState();
-
-                        // Throttled "watching a live" ping — drives usage tracking
-                        // in the content script (so only real live time counts).
-                        const active_now = Date.now();
-                        if (active_now - last_active_ping > 2000) {
-                            last_active_ping = active_now;
-                            document.dispatchEvent(new CustomEvent('_live_catch_up_active'));
-                        }
-
-                        if (settings.enabled) {
-                            set_playbackRate(settings.playbackRate, latency, health, settings.bufferTarget, settings.auto);
-                        } else {
-                            reset_playbackRate();
-                        }
-
-                        if (settings.skip) {
-                            skip_if_over_threathold(latency, settings.skipThreathold);
-                        }
-
-                        const want_update = interval_count++ % 4 === 0;
-                        settings.showPlaybackRate ? update_playbackRate(settings.playbackRate) : hide_playbackRate();
-                        settings.showLatency ? (want_update && update_latency(latency, progress_state.isAtLiveHead)) : hide_latency();
-                        settings.showHealth ? (want_update && update_health(health)) : hide_health();
-                        settings.showEstimation ? (want_update && update_estimation(progress_state.seekableEnd, progress_state.current, progress_state.isAtLiveHead)) : hide_estimation();
-                        settings.showCurrent ? update_current(progress_state.current, progress_state.seekableEnd, progress_state.isAtLiveHead, player.getVideoData()?.video_id) : hide_current();
-                    } else {
-                        hide_playbackRate();
-                        hide_latency();
-                        hide_health();
-                        hide_estimation();
-                        hide_current();
-                    }
-                }
-            }, 250);
+            interval = setInterval(guarded_tick, 250);
         } else {
             reset_playbackRate();
-            hide_playbackRate();
-            hide_latency();
-            hide_health();
-            hide_estimation();
-            hide_current();
+            hideAllIndicators();
         }
     });
 
@@ -411,41 +478,76 @@
         reset_playbackRate();
     });
 
-    const detect_interval = setInterval(() => {
-        player = document.getElementById("movie_player");
-        if (!player) return;
+    // --- Player detection + (re)attach (R2) ---------------------------------
+    // Runs on first load AND on every SPA navigation (YouTube reuses the tab and
+    // may rebuild the player bar). Idempotent: video listeners bind once per
+    // element, buttons are only re-inserted when they've been detached.
+    function buttons_attached(area) {
+        return button_playbackrate.isConnected && area.contains(button_playbackrate);
+    }
 
-        const video = video_instance();
-        if (!video) return;
+    function detect_and_attach() {
+        player = document.getElementById("movie_player");
+        if (!player) return false;
+
+        const v = video_instance();
+        if (!v) return false;
 
         const time_display = document.getElementsByTagName('player-time-display')?.[0];
         let area;
         let button_live_badge;
         if (time_display) { // new-style YouTube embedded player
             area = time_display.querySelector('div.ytwPlayerTimeDisplayLiveDot');
-            if (!area) return;
+            if (!area) return false;
 
             button_live_badge = time_display.querySelector('div.ytwPlayerTimeDisplayLiveDot > div');
-            if (!button_live_badge) return;
+            if (!button_live_badge) return false;
         } else {
             area = player.querySelector('div.ytp-time-display:has(button.ytp-live-badge) div.ytp-time-wrapper');
-            if (!area) return;
+            if (!area) return false;
 
             button_live_badge = player.querySelector('button.ytp-live-badge');
-            if (!button_live_badge) return;
+            if (!button_live_badge) return false;
         }
 
-        clearInterval(detect_interval);
+        // Probe the private API surface once per attach and clear any prior
+        // degraded state so a new stream/page gets a fresh chance.
+        caps = probe_caps(player);
+        engine_degraded = false;
+        tick_errors = 0;
 
-        video.addEventListener('ratechange', onPlaybackRateChange);
-        video.addEventListener('waiting', on_video_waiting);
+        if (bound_video !== v) {
+            v.addEventListener('ratechange', onPlaybackRateChange);
+            v.addEventListener('waiting', on_video_waiting);
+            bound_video = v;
+        }
 
-        let prev = undefined;
-        for (const elem of [button_live_badge, button_playbackrate, button_latency, button_health, button_current, msg_current, button_estimation].reverse()) {
-            area.insertBefore(elem, prev);
-            prev = elem;
+        if (!buttons_attached(area)) {
+            let prev = undefined;
+            for (const elem of [button_live_badge, button_playbackrate, button_latency, button_health, button_current, msg_current, button_estimation].reverse()) {
+                area.insertBefore(elem, prev);
+                prev = elem;
+            }
         }
 
         document.dispatchEvent(new CustomEvent('_live_catch_up_init'));
-    }, 500);
+        return true;
+    }
+
+    function start_detection() {
+        if (detect_interval) return;       // already polling
+        if (detect_and_attach()) return;   // ready right now
+        detect_interval = setInterval(() => {
+            if (detect_and_attach()) {
+                clearInterval(detect_interval);
+                detect_interval = null;
+            }
+        }, 500);
+    }
+
+    start_detection();
+
+    // SPA navigation: re-attach (idempotent) so indicators/catch-up survive
+    // moving between lives without a full page reload.
+    document.addEventListener('yt-navigate-finish', start_detection);
 })();
