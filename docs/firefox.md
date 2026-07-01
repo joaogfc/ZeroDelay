@@ -13,7 +13,7 @@ npm run build:firefox
 
 Pronto: a pasta `dist/firefox` sai pronta para carregar no Firefox ou empacotar.
 
-O script `scripts/build-firefox.js` copia os arquivos da extensão para
+O script `scripts/build-firefox.cjs` copia os arquivos da extensão para
 `dist/firefox` e usa o `manifest.firefox.json` como manifesto. É uma cópia
 direta, sem bundler.
 
@@ -46,6 +46,12 @@ existem nos dois motores sob o namespace `chrome.*`, que o Firefox também expõ
 
 ## Alcance
 
-Suporta Firefox Desktop **121+**. Firefox para Android, Android TV e o aplicativo
-do YouTube ficam de fora, assim como a publicação na loja de complementos (AMO),
-que pede assinatura, capturas de tela e declaração de coleta de dados à parte.
+O `manifest.firefox.json` declara Firefox Desktop a partir da versão **140** em
+`browser_specific_settings.gecko`, e um bloco `gecko_android` a partir da versão
+**142**. O suporte a Android está apenas declarado no manifesto; não há registro
+de teste em dispositivo neste repositório.
+
+O manifesto também inclui `data_collection_permissions` com `required: ["none"]`,
+uma declaração explícita de ausência de coleta de dados no pacote Firefox. A
+publicação em si na loja (assinatura e envio do pacote) é uma etapa separada e
+não faz parte deste build.
