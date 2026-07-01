@@ -9,6 +9,9 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **Idiomas**: interface em espanhol (`es`) e francês (`fr`), além de inglês e
+  português. A doação segue o idioma (Buy me a coffee fora do pt-BR). O
+  `check:locales` agora valida todos os locales contra o `en`.
 - **Atalhos de teclado** para ativar/desativar o ZeroDelay (`Alt+Shift+Y`) e
   pular para o ao vivo (`Alt+Shift+L`) — `⌘+Shift+…` no Mac —, sem abrir o popup.
   Reconfiguráveis em `chrome://extensions/shortcuts`.

@@ -1,0 +1,191 @@
+{
+   "appDesc": {
+      "message": "Sincroniza en tiempo real las transmisiones en vivo de YouTube acelerando la reproducción cuando te atrasas por demoras de red."
+   },
+   "appName": {
+      "message": "ZeroDelay"
+   },
+   "tagline": {
+      "message": "Mantén las transmisiones en vivo de YouTube en tiempo real"
+   },
+   "sectionMode": {
+      "message": "Modo"
+   },
+   "modesNote": {
+      "message": "Acelera solo lo necesario para reducir la latencia y luego descansa en 1.0x (que la mantiene). Menos búfer = más cerca del vivo, pero exige mejor conexión."
+   },
+   "minWarning": {
+      "message": ""
+   },
+   "modeOff": {
+      "message": "Desactivado"
+   },
+   "modeOffDesc": {
+      "message": "Reproducción normal, sin ajustes."
+   },
+   "modeOffConn": {
+      "message": "Cualquier conexión"
+   },
+   "modeOffGain": {
+      "message": "—"
+   },
+   "modeAuto": {
+      "message": "Automático"
+   },
+   "modeAutoDesc": {
+      "message": "Analiza tu conexión y se ajusta solo: más cerca del vivo cuando tu internet aguanta, más búfer cuando oscila."
+   },
+   "modeAutoConn": {
+      "message": "Cualquier conexión (se adapta)"
+   },
+   "modeAutoGain": {
+      "message": "adaptable"
+   },
+   "modeSuave": {
+      "message": "Suave"
+   },
+   "modeSuaveDesc": {
+      "message": "Mantiene bastante búfer y reduce la latencia con margen. Ideal para internet lenta o inestable."
+   },
+   "modeSuaveConn": {
+      "message": "Internet lenta o inestable (~3+ Mbps)"
+   },
+   "modeSuaveGain": {
+      "message": "búfer ~8s"
+   },
+   "modeBalanced": {
+      "message": "Equilibrado"
+   },
+   "modeBalancedDesc": {
+      "message": "Reduce bien la latencia manteniendo ~6s de búfer. Un buen término medio."
+   },
+   "modeBalancedConn": {
+      "message": "Internet promedio (~5–10 Mbps)"
+   },
+   "modeBalancedGain": {
+      "message": "búfer ~6s"
+   },
+   "modeAggressive": {
+      "message": "Cercano"
+   },
+   "modeAggressiveDesc": {
+      "message": "Se acerca más al vivo, manteniendo ~4.5s de búfer. Necesita internet estable."
+   },
+   "modeAggressiveConn": {
+      "message": "Internet estable (~15+ Mbps)"
+   },
+   "modeAggressiveGain": {
+      "message": "búfer ~4.5s"
+   },
+   "modeMin": {
+      "message": "Latencia mínima"
+   },
+   "modeMinDesc": {
+      "message": "Lo más cerca posible del vivo, con solo ~3.5s de búfer. Necesita internet rápida y estable."
+   },
+   "modeMinConn": {
+      "message": "Internet rápida y estable (~25+ Mbps)"
+   },
+   "modeMinGain": {
+      "message": "búfer ~3.5s"
+   },
+   "sectionIndicators": {
+      "message": "Indicadores del reproductor"
+   },
+   "showPlaybackRate": {
+      "message": "Mostrar la velocidad de reproducción actual"
+   },
+   "showLatency": {
+      "message": "Mostrar la latencia actual de la transmisión en vivo"
+   },
+   "showHealth": {
+      "message": "Mostrar el estado actual del búfer"
+   },
+   "reset": {
+      "message": "Restaurar valores predeterminados"
+   },
+   "resetHint": {
+      "message": "Mantén presionado 1 segundo para restablecer."
+   },
+   "supportTitle": {
+      "message": "Invítame un café"
+   },
+   "supportNote": {
+      "message": "¿Te gusta la extensión? Apoya su desarrollo con una pequeña donación."
+   },
+   "supportCustom": {
+      "message": "Otro"
+   },
+   "supportCustomPlaceholder": {
+      "message": "Monto en R$"
+   },
+   "supportScan": {
+      "message": "Escanea con la app de tu banco o copia el código:"
+   },
+   "supportCopy": {
+      "message": "Copiar código PIX"
+   },
+   "supportCopied": {
+      "message": "¡Copiado!"
+   },
+   "supportBmc": {
+      "message": "Invítame un café"
+   },
+   "donateNudge": {
+      "message": "¿Te gusta ZeroDelay? Si te sirve, puedes apoyarlo con un café — totalmente opcional. 🙂"
+   },
+   "donateLater": {
+      "message": "Recordar más tarde"
+   },
+   "donateOptOut": {
+      "message": "No mostrar de nuevo"
+   },
+   "donateBannerText": {
+      "message": "¿Te gusta ZeroDelay? Apóyalo con un café."
+   },
+   "donateBannerCta": {
+      "message": "Apoyar"
+   },
+   "donateBannerClose": {
+      "message": "Cerrar"
+   },
+   "stallTitle": {
+      "message": "La transmisión no deja de almacenar en búfer"
+   },
+   "stallDesc": {
+      "message": "Un modo más suave mantiene más búfer y lo estabiliza."
+   },
+   "stallSwitch": {
+      "message": "Cambiar a"
+   },
+   "supportBtn": {
+      "message": "Apoyar"
+   },
+   "supportCtaText": {
+      "message": "¿Te gusta? Invítame un café 🙏"
+   },
+   "supportCtaBtn": {
+      "message": "Apoyar"
+   },
+   "commandToggleDesc": {
+      "message": "Activar/desactivar ZeroDelay"
+   },
+   "commandGoLiveDesc": {
+      "message": "Saltar al vivo"
+   },
+   "a11yPlaybackRate": {
+      "message": "Velocidad de reproducción"
+   },
+   "a11yLatency": {
+      "message": "Latencia en vivo"
+   },
+   "a11yHealth": {
+      "message": "Estado del búfer"
+   },
+   "a11yEstimation": {
+      "message": "Tiempo estimado para alcanzar el vivo"
+   },
+   "a11yCurrent": {
+      "message": "Tiempo actual (haz clic para copiar el enlace)"
+   }
+}

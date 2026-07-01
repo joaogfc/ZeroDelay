@@ -1,8 +1,8 @@
 // Validate the extension's JSON and keep locales in sync — no dependencies.
 //
 // 1. Every relevant .json (manifest + _locales/**/messages.json) must parse.
-// 2. en and pt_BR must have the exact same set of message keys.
-// 3. Each message's placeholders ($n$ and named) must match across locales.
+// 2. Every locale must have exactly the same keys as en (the default_locale).
+// 3. Each message's placeholders ($n$ and named) must match en, per locale.
 //
 // Exits 0 when everything is consistent, 1 (with a report) otherwise.
 
@@ -43,8 +43,8 @@ if (!existsSync(localesDir)) {
     }
 }
 
-// --- 2 & 3. Compare en vs pt_BR -------------------------------------------
-const REQUIRED = ['en', 'pt_BR'];
+// --- 2 & 3. Compare every locale against en (the reference) ----------------
+const REQUIRED = ['en', 'pt_BR', 'es', 'fr'];
 
 for (const locale of REQUIRED) {
     if (!(locale in localeFiles)) {
@@ -53,7 +53,6 @@ for (const locale of REQUIRED) {
 }
 
 const en = localeFiles.en;
-const ptBR = localeFiles.pt_BR;
 
 // Named placeholders like $count$ or positional ones like $1, referenced in a
 // message string. Returns a sorted, de-duplicated list for comparison.
@@ -66,24 +65,27 @@ function placeholdersIn(messageObj) {
     return [...found].sort();
 }
 
-if (en && ptBR) {
-    const enKeys = new Set(Object.keys(en));
-    const ptKeys = new Set(Object.keys(ptBR));
+if (en) {
+    const enKeys = Object.keys(en);
+    for (const [locale, msgs] of Object.entries(localeFiles)) {
+        if (locale === 'en' || !msgs) continue;
+        const keys = new Set(Object.keys(msgs));
 
-    for (const k of enKeys) {
-        if (!ptKeys.has(k)) errors.push(`key "${k}" is in en but missing from pt_BR`);
-    }
-    for (const k of ptKeys) {
-        if (!enKeys.has(k)) errors.push(`key "${k}" is in pt_BR but missing from en`);
-    }
+        for (const k of enKeys) {
+            if (!keys.has(k)) errors.push(`[${locale}] key "${k}" is in en but missing`);
+        }
+        for (const k of keys) {
+            if (!(k in en)) errors.push(`[${locale}] key "${k}" is not in en`);
+        }
 
-    // Placeholder parity only for keys present in both.
-    for (const k of enKeys) {
-        if (!ptKeys.has(k)) continue;
-        const a = placeholdersIn(en[k]).join(',');
-        const b = placeholdersIn(ptBR[k]).join(',');
-        if (a !== b) {
-            errors.push(`key "${k}": placeholders differ (en: [${a}] vs pt_BR: [${b}])`);
+        // Placeholder parity only for keys present in both.
+        for (const k of enKeys) {
+            if (!keys.has(k)) continue;
+            const a = placeholdersIn(en[k]).join(',');
+            const b = placeholdersIn(msgs[k]).join(',');
+            if (a !== b) {
+                errors.push(`[${locale}] key "${k}": placeholders differ (en: [${a}] vs [${b}])`);
+            }
         }
     }
 }
@@ -95,4 +97,4 @@ if (errors.length) {
     process.exit(1);
 }
 
-console.log('check:locales — OK (JSON valid, en/pt_BR keys and placeholders in sync)');
+console.log(`check:locales — OK (JSON valid; ${Object.keys(localeFiles).length} locales match en's keys and placeholders)`);
