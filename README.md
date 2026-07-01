@@ -67,6 +67,18 @@ vivo):
 - `Exibir latência atual da transmissão ao vivo`
 - `Exibir saúde atual do buffer`
 
+## Contribuindo
+
+Contribuições são bem-vindas! Veja o [CONTRIBUTING.md](CONTRIBUTING.md) para
+saber como rodar a extensão localmente, o estilo de código e como abrir uma boa
+Pull Request. Ao participar, você concorda com o
+[Código de Conduta](CODE_OF_CONDUCT.md).
+
+- Encontrou um bug ou tem uma ideia? [Abra uma issue](https://github.com/joaogfc/ZeroDelay/issues/new/choose).
+- Encontrou uma falha de segurança? Não abra issue pública — veja o
+  [SECURITY.md](SECURITY.md).
+- O histórico de mudanças fica no [CHANGELOG.md](CHANGELOG.md).
+
 ## Autor
 
 Criado por **João Gustavo França**
