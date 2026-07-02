@@ -109,3 +109,22 @@ test('resolveSettings applies defaults, clamps and snaps', () => {
     assert.equal(t.bufferTarget, common.defaultBufferTarget); // NaN -> default
     assert.equal(t.enabled, false); // real value kept
 });
+
+test('detectBrazilMatch fires on a real Brazil matchup title', () => {
+    assert.equal(common.detectBrazilMatch('AO VIVO: BRASIL X CROÁCIA | COPA DO MUNDO FIFA™ 2026 | QUARTAS'), true);
+    assert.equal(common.detectBrazilMatch('AO VIVO: CROÁCIA X BRASIL | COPA DO MUNDO'), true); // reversed order
+    assert.equal(common.detectBrazilMatch('BRASIL VS ARGENTINA | Eliminatórias'), true);       // "vs"
+    assert.equal(common.detectBrazilMatch('Brasil x Chile | amistoso'), true);                 // lowercase
+    assert.equal(common.detectBrazilMatch('BRASÍL X BOLÍVIA | jogo'), true);                    // stray accent
+    assert.equal(common.detectBrazilMatch('AO VIVO: BRASIL × COLÔMBIA | COPA'), true);          // "×" separator
+});
+
+test('detectBrazilMatch ignores non-Brazil and non-matchup titles', () => {
+    assert.equal(common.detectBrazilMatch('AO VIVO: ESPANHA X ÁUSTRIA | COPA DO MUNDO FIFA™ 2026'), false);
+    assert.equal(common.detectBrazilMatch('AO VIVO: ESPANHA X ITÁLIA | e a torcida do Brasil vibra'), false); // "brasil" not a team
+    assert.equal(common.detectBrazilMatch('ESPANHA X FRANÇA | Brasil assiste de fora'), false);  // brasil only in a later segment
+    assert.equal(common.detectBrazilMatch('Melhores momentos da seleção do Brasil'), false);     // no matchup separator
+    assert.equal(common.detectBrazilMatch(''), false);
+    assert.equal(common.detectBrazilMatch(undefined), false);
+    assert.equal(common.detectBrazilMatch(null), false);
+});

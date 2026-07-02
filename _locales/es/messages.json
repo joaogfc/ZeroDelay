@@ -170,6 +170,9 @@
    "commandGoLiveDesc": {
       "message": "Saltar al vivo"
    },
+   "commandHexaDesc": {
+      "message": "Activar/desactivar MODO HEXA"
+   },
    "a11yPlaybackRate": {
       "message": "Velocidad de reproducción"
    },

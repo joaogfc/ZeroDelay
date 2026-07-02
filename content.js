@@ -4,7 +4,10 @@
 import(chrome.runtime.getURL('common.js')).then(common => {
     if (!common.isLiveChat(location.href)) {
         main(common);
-        if (window.top === window) initDonation(common);
+        if (window.top === window) {
+            initDonation(common);
+            initHexa(common);
+        }
     }
 });
 
@@ -256,4 +259,61 @@ function showStallOffer(common, target) {
         autoHideMs: 14000,
         onRemove: () => { stallOfferEl = null; },
     });
+}
+
+// --------------------------------------------------------------- MODO HEXA
+// Top-frame-only. Reskins the whole YouTube page green/yellow while a live
+// Brazil match is on screen, and reverts otherwise. The engine (inject.js,
+// page world) reports the current video via `_live_catch_up_video_meta`; here
+// (isolated world) we decide and apply — the theme CSS lives in hexa/theme.js
+// and toggles behind a single <html> class, so this only flips a boolean.
+async function initHexa(common) {
+    let hexa = null;       // set once hexa/theme.js loads
+    let meta = { title: '', isLive: false, video_id: '' };
+    let override = null;   // null = auto (detect), true = force on, false = force off
+    let applied = false;
+
+    const autoActive = () => meta.isLive && common.detectBrazilMatch(meta.title);
+    const shouldTheme = () => (override === null ? autoActive() : override);
+
+    function reevaluate() {
+        if (!hexa) return; // buffer decisions until the theme module is ready
+        const want = shouldTheme();
+        if (want === applied) return;
+        applied = want;
+        hexa.setActive(want);
+    }
+
+    // Attach listeners SYNCHRONOUSLY (before the await): the engine dedupes its
+    // meta dispatches, so a meta emitted while the module is still loading must
+    // not be missed — we buffer it into `meta` and apply once hexa is ready.
+    document.addEventListener('_live_catch_up_video_meta', e => {
+        const d = e.detail;
+        if (!d) return;
+        // The manual override is scoped to the current video ("na aba"): moving
+        // to a new video clears it so auto-detection takes back over.
+        if (d.video_id !== meta.video_id) override = null;
+        meta = { title: d.title || '', isLive: !!d.isLive, video_id: d.video_id || '' };
+        reevaluate();
+    });
+
+    // Manual escape hatch: a keyboard command (default Alt+Shift+H, remappable at
+    // chrome://extensions/shortcuts) flips the theme on/off over whatever auto
+    // decided, for this tab. Routed via the browser-level commands API + the
+    // background worker — a content-script keydown is unreliable for Alt+Shift,
+    // which Windows also consumes to switch keyboard layout.
+    chrome.runtime.onMessage.addListener(msg => {
+        if (msg?.type === 'toggle-hexa') {
+            override = !applied;
+            reevaluate();
+        }
+    });
+
+    try {
+        hexa = await import(chrome.runtime.getURL('hexa/theme.js'));
+    } catch {
+        return; // theme module missing — engine keeps working, just no theme
+    }
+    hexa.install();  // insert the dormant <style> once
+    reevaluate();    // apply whatever meta arrived while the module was loading
 }

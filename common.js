@@ -367,3 +367,29 @@ export function isLiveChat(url) {
         || url.startsWith('https://www.youtube.com/live_chat_replay?')
         ;
 }
+
+// ---------------------------------------------------------------------------
+// MODO HEXA — Brazil-game detection
+// ---------------------------------------------------------------------------
+/**
+ * True when a video title is a Brazil football match (e.g.
+ * "AO VIVO: BRASIL X CROÁCIA | COPA DO MUNDO FIFA™ 2026 | ...").
+ *
+ * Only the first "|"-segment (the matchup) is inspected, accent- and
+ * case-insensitively, and BRASIL/BRAZIL must sit right next to a match
+ * separator (X, ×, VS, V) on either side — so a stray "torcida do Brasil" in
+ * a non-Brazil title, or the word appearing in a later segment, never matches.
+ * Pure and unit-tested (test/common.test.mjs) — the theme's whole gate.
+ * @param {string} title - The video title from player.getVideoData().
+ * @returns {boolean}
+ */
+export function detectBrazilMatch(title) {
+    if (typeof title !== 'string' || !title) return false;
+    const segment = title.split('|', 1)[0]
+        .normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+    const TEAM = '(?:BRASIL|BRAZIL)';
+    const SEP = '(?:VS|V|X|\\u00D7)';          // "vs", "v", "x", "×"
+    const before = new RegExp(`\\b${TEAM}\\s+${SEP}(?:\\s|$)`);   // BRASIL X ...
+    const after = new RegExp(`(?:^|\\s)${SEP}\\s+${TEAM}\\b`);    // ... X BRASIL
+    return before.test(segment) || after.test(segment);
+}

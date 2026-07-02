@@ -50,25 +50,26 @@ chrome.runtime.onMessage.addListener(msg => {
 });
 
 /**
- * Send the "jump to live" message to the active tab only. Any failure (no
- * active tab, not a YouTube tab, no content script listening) is swallowed —
- * the shortcut simply does nothing rather than falling back to a global signal.
+ * Send a one-off message to the active tab only. Any failure (no active tab,
+ * not a YouTube tab, no content script listening) is swallowed — the shortcut
+ * simply does nothing rather than falling back to a global signal.
+ * @param {string} type - Message type the content script listens for.
  */
-function goLiveOnActiveTab() {
+function messageActiveTab(type) {
     chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
         const tab = tabs?.[0];
         if (!tab?.id) return;
-        chrome.tabs.sendMessage(tab.id, { type: 'go-live' }, () => {
+        chrome.tabs.sendMessage(tab.id, { type }, () => {
             void chrome.runtime.lastError; // no listener on that tab — ignore
         });
     });
 }
 
 /**
- * Handle a keyboard command. `toggle-enabled` writes storage, which every
- * open tab's content script reacts to. `go-live` is scoped to the active tab
- * only, sent directly via chrome.tabs.sendMessage (see goLiveOnActiveTab).
- * @param {'toggle-enabled'|'go-live'} command - Command id from the manifest.
+ * Handle a keyboard command. `toggle-enabled` writes storage, which every open
+ * tab's content script reacts to. `go-live` and `toggle-hexa` are scoped to the
+ * active tab only, sent directly via chrome.tabs.sendMessage (see messageActiveTab).
+ * @param {'toggle-enabled'|'go-live'|'toggle-hexa'} command - Command id from the manifest.
  */
 function onCommand(command) {
     if (command === 'toggle-enabled') {
@@ -79,7 +80,9 @@ function onCommand(command) {
             chrome.storage.local.set(patch);
         });
     } else if (command === 'go-live') {
-        goLiveOnActiveTab();
+        messageActiveTab('go-live');
+    } else if (command === 'toggle-hexa') {
+        messageActiveTab('toggle-hexa');
     }
 }
 

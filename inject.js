@@ -286,6 +286,7 @@
     let msg_current_timeout;
     let current_settings;
     let last_active_ping = 0;
+    let last_meta_key = null;     // dedupes _live_catch_up_video_meta dispatches
 
     // --- Resilience state (R1/R2/R3) ----------------------------------------
     // The engine drives entirely off UNDOCUMENTED player methods. `caps` records
@@ -456,6 +457,33 @@
 
     document.addEventListener('_live_catch_up_go_live', seek_to_live);
 
+    // --- MODO HEXA bridge ----------------------------------------------------
+    // The content script (isolated world) owns the theme but cannot call the
+    // private player API, so we report the current video's identity/liveness
+    // to it. It parses the title for a Brazil match and toggles the theme.
+    // Deduped by (video_id, isLive, title) so navigation/title changes flip the
+    // theme but a stable live doesn't spam the isolated world.
+    function dispatch_video_meta() {
+        const p = document.getElementById('movie_player');
+        let title = '', author = '', isLive = false, video_id = '';
+        if (p && typeof p.getVideoData === 'function') {
+            let vd;
+            try { vd = p.getVideoData(); } catch { vd = null; }
+            if (vd) {
+                title = vd.title || '';
+                author = vd.author || '';
+                video_id = vd.video_id || '';
+                isLive = !!vd.isLive; // false for VOD/replay — blocks non-live Brazil games
+            }
+        }
+        const key = video_id + '|' + isLive + '|' + title;
+        if (key === last_meta_key) return;
+        last_meta_key = key;
+        document.dispatchEvent(new CustomEvent('_live_catch_up_video_meta', {
+            detail: { title, author, isLive, video_id },
+        }));
+    }
+
     // --- Player detection + (re)attach (R2) ---------------------------------
     // Runs on first load AND on every SPA navigation (YouTube reuses the tab and
     // may rebuild the player bar). Idempotent: video listeners bind once per
@@ -519,6 +547,7 @@
             }
         }
 
+        dispatch_video_meta();   // player is up + getVideoData ready → tell the theme
         document.dispatchEvent(new CustomEvent('_live_catch_up_init'));
         return true;
     }
@@ -542,6 +571,10 @@
         if (detect_and_attach()) return;   // ready right now
         let attempts = 0;
         detect_interval = setInterval(() => {
+            // Also refresh the theme's view of the current video even when the
+            // live badge isn't found (non-live pages, miniplayer) so it can
+            // deactivate — or stay active while a Brazil live plays minimized.
+            dispatch_video_meta();
             if (detect_and_attach()) stop_detection();
             else if (fast && ++attempts >= FAST_DETECT_ATTEMPTS) start_detection(false);
         }, fast ? FAST_DETECT_MS : SLOW_DETECT_MS);

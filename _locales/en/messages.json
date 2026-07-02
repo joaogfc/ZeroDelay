@@ -170,6 +170,9 @@
    "commandGoLiveDesc": {
       "message": "Jump to live"
    },
+   "commandHexaDesc": {
+      "message": "Turn MODO HEXA on/off"
+   },
    "a11yPlaybackRate": {
       "message": "Playback speed"
    },

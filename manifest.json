@@ -23,6 +23,13 @@
             "mac": "Command+Shift+L"
          },
          "description": "__MSG_commandGoLiveDesc__"
+      },
+      "toggle-hexa": {
+         "suggested_key": {
+            "default": "Alt+Shift+H",
+            "mac": "Command+Shift+H"
+         },
+         "description": "__MSG_commandHexaDesc__"
       }
    },
    "content_scripts": [ {
@@ -48,6 +55,6 @@
    "version": "1.1.1",
    "web_accessible_resources": [ {
       "matches": [ "https://www.youtube.com/*" ],
-      "resources": [ "common.js", "inject.js", "engine/controller.js" ]
+      "resources": [ "common.js", "inject.js", "engine/controller.js", "hexa/theme.js" ]
    } ]
 }
