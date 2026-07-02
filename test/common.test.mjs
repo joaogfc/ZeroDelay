@@ -88,3 +88,24 @@ test('toggleEnabledAction does not remember an off-grid custom mode', () => {
     assert.equal(common.deriveMode(r.apply), 'off');
     assert.equal(r.remember, undefined);
 });
+
+test('toggleEnabledAction treats legacy {enabled:false} data as off', () => {
+    // Written before presets existed: skip was left at its default (true), so
+    // deriveMode reports "custom" — the toggle must still turn playback back ON
+    // on the first key press instead of rewriting "off".
+    assert.equal(common.deriveMode(common.toggleEnabledAction({ enabled: false }, 'balanced').apply), 'balanced');
+    assert.equal(common.deriveMode(common.toggleEnabledAction({ enabled: false }, undefined).apply), 'auto');
+});
+
+test('resolveSettings applies defaults, clamps and snaps', () => {
+    const s = common.resolveSettings({});
+    assert.equal(s.enabled, common.defaultEnabled);
+    assert.equal(s.playbackRate, common.defaultPlaybackRate);
+    assert.equal(s.bufferTarget, common.defaultBufferTarget);
+    assert.equal(s.showEstimation, common.defaultShowEstimation);
+
+    const t = common.resolveSettings({ playbackRate: 99, bufferTarget: 'abc', enabled: false });
+    assert.equal(t.playbackRate, common.maxPlaybackRate); // clamped
+    assert.equal(t.bufferTarget, common.defaultBufferTarget); // NaN -> default
+    assert.equal(t.enabled, false); // real value kept
+});
