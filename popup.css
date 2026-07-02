@@ -57,8 +57,8 @@
     --ok: #2ba640;
     --warn: #ffc43d;
 
-    --radius: 14px;
-    --radius-sm: 10px;
+    --radius: 12px;
+    --radius-sm: 9px;
     --ease: cubic-bezier(0.2, 0, 0, 1);
     /* Overshoot spring for the degraded → sharp morph ("focus arriving"). */
     --spring: cubic-bezier(0.2, 0.9, 0.25, 1.18);
@@ -275,11 +275,13 @@ body {
     transform: scale(0.99);
 }
 
-/* Selected = synced: the card locks to the live-red signal. */
+/* Selected = synced: the card locks to live-red and pops off a hard red offset
+ * shadow — part sticker lift, part broadcast chroma-ghost. */
 .mode-card[aria-checked="true"] {
     border-color: var(--sync);
     background: linear-gradient(180deg, var(--sync-soft), transparent 140%);
-    box-shadow: 0 0 0 1px var(--sync), 0 8px 24px -12px var(--sync-glow);
+    box-shadow: 0 0 0 1px var(--sync), 5px 5px 0 0 var(--sync-glow);
+    transform: translate(-1px, -1px);
 }
 
 .mode-icon {
@@ -639,7 +641,7 @@ body {
     overflow: hidden;
     padding: 9px 18px;
     border: 1px solid var(--border);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--text-dim);
     font-family: inherit;
@@ -647,12 +649,19 @@ body {
     font-weight: 600;
     cursor: pointer;
     user-select: none;
-    transition: color 160ms var(--ease), border-color 160ms var(--ease);
+    box-shadow: 3px 3px 0 0 var(--pop);
+    transition: color 160ms var(--ease), border-color 160ms var(--ease), transform 120ms var(--spring), box-shadow 120ms var(--ease);
 }
 
 .reset:hover {
     color: var(--sync-strong);
     border-color: var(--sync);
+}
+
+/* Presses into its shadow while you hold it down to reset. */
+.reset:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--pop);
 }
 
 .reset-label {
@@ -917,12 +926,20 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease);
+    box-shadow: 3px 3px 0 0 var(--pop);
+    transition: background 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease), transform 120ms var(--spring), box-shadow 120ms var(--ease);
 }
 
 .support-copy:hover {
     background: var(--accent);
     color: #fff;
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 0 var(--pop);
+}
+
+.support-copy:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--pop);
 }
 
 .support-copy.copied {
@@ -950,15 +967,19 @@ body {
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: filter 150ms var(--ease), transform 80ms var(--ease);
+    box-shadow: 3px 3px 0 0 var(--pop);
+    transition: filter 150ms var(--ease), transform 120ms var(--spring), box-shadow 120ms var(--ease);
 }
 
 .support-link:hover {
     filter: brightness(1.07);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 0 var(--pop);
 }
 
 .support-link:active {
-    transform: translateY(1px);
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--pop);
 }
 
 .support-link-icon {
