@@ -13,8 +13,16 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
 let storageListenersAttached = false;
 
+// After the extension is reloaded/updated/disabled, content scripts from the
+// OLD context keep running in already-open tabs; any chrome.* call then throws
+// "Extension context invalidated". chrome.runtime.id goes undefined in that
+// state, so we gate chrome.* behind this and quietly stand down (also clearing
+// the orphaned timers that would otherwise keep throwing).
+const extensionAlive = () => Boolean(chrome.runtime?.id);
+
 function main(common) {
     function loadSettings() {
+        if (!extensionAlive()) return;
         chrome.storage.local.get(common.storage, data => {
             sendLoadSettingsEvent(common.resolveSettings(data));
         });
@@ -128,7 +136,8 @@ function initDonation(common) {
     document.addEventListener('_live_catch_up_active', () => { lastActive = Date.now(); });
 
     setTimeout(() => maybeShowBanner(common), 8000);
-    setInterval(() => {
+    const usageTimer = setInterval(() => {
+        if (!extensionAlive()) { clearInterval(usageTimer); return; }
         if (document.hidden || Date.now() - lastActive > 5000) return;
         chrome.storage.local.get(['enabled', 'donateUsageSeconds', 'donateLastCountedAt'], d => {
             if (!common.value(d.enabled, common.defaultEnabled)) return;
@@ -149,7 +158,7 @@ function initDonation(common) {
 let donationBannerEl = null;
 
 function maybeShowBanner(common) {
-    if (donationBannerEl) return;
+    if (donationBannerEl || !extensionAlive()) return;
     chrome.storage.local.get(common.donateKeys, d => {
         if (donationBannerEl || d.donateBannerShown) return;
         if (!common.donateEligible(d, Date.now())) return;
@@ -228,7 +237,7 @@ let stallOfferEl = null;
 let stallOfferShown = false;
 
 function onStallDetected(common) {
-    if (stallOfferShown || stallOfferEl) return;
+    if (stallOfferShown || stallOfferEl || !extensionAlive()) return;
     chrome.storage.local.get(common.storage, data => {
         const target = common.calmerMode(common.deriveMode(data));
         if (!target) return; // already on the calmest mode (or off)
