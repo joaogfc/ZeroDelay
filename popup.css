@@ -116,6 +116,7 @@ body {
 
 .app {
     position: relative;
+    isolation: isolate;
     width: 100%;
     min-width: 340px;
     max-width: 440px;
@@ -124,6 +125,30 @@ body {
     flex-direction: column;
     gap: 18px;
     animation: rise 220ms var(--ease) both;
+}
+
+/* Pixel-dissolve: the popup materialises from a scatter of pixels at the top
+ * edge while degraded, resolving to clean once synced (echoes the "degraded →
+ * sharp" pixel gradient). Sits behind content (z-index -1), so it never fights
+ * the text; driven by the same data-signal hook. */
+.app::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 66px;
+    z-index: -1;
+    pointer-events: none;
+    background: repeating-conic-gradient(var(--degraded-soft) 0% 25%, transparent 0% 50%) 0 0 / 6px 6px;
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent);
+    mask-image: linear-gradient(180deg, #000, transparent);
+    opacity: 1;
+    transition: opacity 600ms var(--ease);
+}
+
+.app[data-signal="synced"]::before {
+    opacity: 0;
 }
 
 /* Signal texture: a faint CRT scanline over the whole popup while the engine is
