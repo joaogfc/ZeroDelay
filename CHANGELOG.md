@@ -30,6 +30,15 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ### Alterado
 
+- **Interface do popup repaginada** com a linguagem visual "degradado → nítido":
+  tipografia **Departure Mono** (self-hosted), ícones de modo que fazem *morph* de
+  pixelado (**Pixelarticons**) para nítido (**Lucide**) no hover/foco/seleção,
+  paleta de sinal cinza↔vermelho espelhando o selo de "ao vivo" do YouTube, selo
+  global LIVE↔SYNCED (tally light) e textura de scanline que some ao sincronizar.
+  Puramente visual — nenhuma mudança de comportamento, storage ou i18n. Fontes e
+  ícones são vendorados localmente (sem CDN) e creditados no
+  `THIRD-PARTY-NOTICES.md` (Departure Mono — SIL OFL; Pixelarticons — MIT;
+  Lucide — ISC).
 - Maior resiliência do motor de catch-up.
 - Controle de catch-up **preditivo**: além do nível do buffer, o motor agora
   observa a *tendência* (a variação do buffer ao longo do tempo) e recua para
