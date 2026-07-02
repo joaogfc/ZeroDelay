@@ -141,6 +141,34 @@ export const storage = ['enabled', 'playbackRate', 'showPlaybackRate', 'showLate
 // ---------------------------------------------------------------------------
 export const donateKeys = ['donateInstalledAt', 'donateUsageSeconds', 'donateOptOut', 'donateSnoozeUntil', 'donateBannerShown', 'donateLastCountedAt'];
 
+// Per-channel mode memory. Stored separately from the engine's main settings so
+// it does not interfere with Restore Defaults.
+export const channelModesKey = 'channelModes';
+export const currentChannelIdKey = 'currentChannelId';
+
+export function getSuggestedModeForChannel(data, channelId) {
+    if (!channelId || typeof channelId !== 'string') return null;
+    if (!data || typeof data !== 'object') return null;
+    const modes = data[channelModesKey];
+    if (!modes || typeof modes !== 'object') return null;
+    const mode = modes[channelId];
+    return typeof mode === 'string' && presets[mode] ? mode : null;
+}
+
+export function saveChannelMode(data, channelId, mode, maxChannels = 50) {
+    if (!channelId || typeof channelId !== 'string') return {};
+    if (!presets[mode]) return data?.[channelModesKey] || {};
+
+    const modes = { ...(data?.[channelModesKey] || {}), [channelId]: mode };
+    const keys = Object.keys(modes);
+    if (keys.length <= maxChannels) return modes;
+
+    const keep = keys.slice(keys.length - maxChannels);
+    const pruned = {};
+    for (const key of keep) pruned[key] = modes[key];
+    return pruned;
+}
+
 /** Record the install time once (ages the donation invite). Callable from any extension context. */
 export function ensureInstalledAt() {
     chrome.storage.local.get(['donateInstalledAt'], d => {

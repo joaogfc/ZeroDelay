@@ -336,6 +336,21 @@
         };
     }
 
+    function sendChannelIdUpdate() {
+        if (!player || !caps?.videoData) return;
+        try {
+            const data = player.getVideoData();
+            const channelId = data?.channel_id || data?.author;
+            if (channelId) {
+                document.dispatchEvent(new CustomEvent('_live_catch_up_channel_id', {
+                    detail: { type: 'channel-id-update', channelId },
+                }));
+            }
+        } catch {
+            // Ignore if the private API is unavailable at this moment.
+        }
+    }
+
     function hideAllIndicators() {
         hide_playbackRate();
         hide_latency();
@@ -493,6 +508,7 @@
         caps = probe_caps(player);
         engine_degraded = false;
         tick_errors = 0;
+        sendChannelIdUpdate();
 
         // Fresh stream, fresh controller state: EMAs/hysteresis measured on the
         // previous live must not steer the first seconds of this one.

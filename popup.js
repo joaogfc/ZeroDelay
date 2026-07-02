@@ -125,6 +125,7 @@ let state = {};
 const updaters = [];          // fn() -> sync a control's display
 const modeCards = {};         // mode name -> card element
 let rovingModes = null;       // wireRadiogroup roving-tabindex setter for modes
+let currentChannelId = null;  // Channel ID for per-channel mode memory
 
 function setOne(key, val) {
     state[key] = val;
@@ -137,6 +138,13 @@ function applyPreset(name) {
     chrome.storage.local.set(preset);
     Object.assign(state, preset);
     refresh();
+
+    if (currentChannelId && name !== 'off') {
+        chrome.storage.local.get([common.channelModesKey], data => {
+            const channelModes = common.saveChannelMode(data, currentChannelId, name);
+            chrome.storage.local.set({ [common.channelModesKey]: channelModes });
+        });
+    }
 }
 
 // --------------------------------------------------------------- Render
@@ -482,8 +490,9 @@ function refresh() {
     // screen readers and hyphenation (popup.html can't hardcode one).
     document.documentElement.lang = chrome.i18n.getUILanguage() || 'en';
 
-    const data = await getStorage(common.storage);
+    const data = await getStorage([...common.storage, common.currentChannelIdKey]);
     state = common.resolveSettings(data);
+    currentChannelId = data[common.currentChannelIdKey] || null;
     renderStatic();
     renderModes();
     renderIndicators();
