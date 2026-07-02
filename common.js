@@ -14,7 +14,27 @@ const msg = (key, fallback) => {
 // pt-BR sees PIX; any other browser UI language sees the international donation
 // links instead. Decided automatically — there is no manual switcher. Must match
 // pt-BR specifically: PIX is Brazil-only, and pt-PT users can't use it.
-export const isBrazil = () => /^pt[-_]?br/i.test((i18n ? i18n.getUILanguage() : '') || '');
+//
+// We look at BOTH the UI language (getUILanguage) AND the user's ordered list of
+// accepted languages (navigator.languages): many Brazilians run the browser in
+// English yet still want PIX, so any pt-BR signal in either source counts (#21).
+const isPtBr = tag => /^pt[-_]?br/i.test(tag || '');
+
+/**
+ * True when a pt-BR tag appears in the UI language or the accepted-languages list.
+ * Pure (sources injected) so it stays unit-testable without a browser.
+ * @param {string} uiLang - chrome.i18n.getUILanguage() (or '').
+ * @param {string[]} languages - navigator.languages (or []).
+ */
+export function prefersBrazil(uiLang, languages) {
+    if (isPtBr(uiLang)) return true;
+    return Array.isArray(languages) && languages.some(isPtBr);
+}
+
+export const isBrazil = () => prefersBrazil(
+    i18n ? i18n.getUILanguage() : '',
+    (typeof navigator !== 'undefined' && navigator.languages) || [],
+);
 
 export const label = {
     // App

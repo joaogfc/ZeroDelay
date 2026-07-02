@@ -58,6 +58,16 @@ test('isLiveChat detects only the live-chat popout URLs', () => {
     assert.equal(common.isLiveChat('https://www.youtube.com/watch?v=abc'), false);
 });
 
+test('prefersBrazil detects pt-BR from the UI language OR the accepted-languages list', () => {
+    assert.equal(common.prefersBrazil('pt-BR', []), true);                         // UI language
+    assert.equal(common.prefersBrazil('pt_BR', []), true);                         // underscore variant
+    assert.equal(common.prefersBrazil('en-US', ['en-US', 'pt-BR', 'pt']), true);   // English UI, pt-BR accepted (#21)
+    assert.equal(common.prefersBrazil('en-US', ['en-US', 'en']), false);           // no pt-BR anywhere
+    assert.equal(common.prefersBrazil('pt-PT', ['pt-PT', 'pt']), false);           // Portugal is not Brazil
+    assert.equal(common.prefersBrazil('', ['pt']), false);                         // bare "pt" is ambiguous — needs BR
+    assert.equal(common.prefersBrazil('', undefined), false);                      // missing sources
+});
+
 test('emitGoLive writes the go-live nonce under its own key', () => {
     let written = null;
     common.emitGoLive(v => { written = v; }, 12345);
