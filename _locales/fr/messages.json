@@ -14,9 +14,6 @@
    "modesNote": {
       "message": "Accélère juste ce qu'il faut pour réduire la latence, puis revient à 1.0x (ce qui la maintient). Moins de tampon = plus proche du direct, mais demande une meilleure connexion."
    },
-   "minWarning": {
-      "message": ""
-   },
    "modeOff": {
       "message": "Désactivé"
    },

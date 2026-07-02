@@ -14,9 +14,6 @@
    "modesNote": {
       "message": "Acelera só o necessário para reduzir a latência e descansa em 1.0x (que segura a latência). Menos buffer = mais perto do ao vivo, mas pede internet melhor."
    },
-   "minWarning": {
-      "message": ""
-   },
    "modeOff": {
       "message": "Desligado"
    },

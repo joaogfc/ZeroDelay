@@ -14,9 +14,6 @@
    "modesNote": {
       "message": "Acelera solo lo necesario para reducir la latencia y luego descansa en 1.0x (que la mantiene). Menos búfer = más cerca del vivo, pero exige mejor conexión."
    },
-   "minWarning": {
-      "message": ""
-   },
    "modeOff": {
       "message": "Desactivado"
    },

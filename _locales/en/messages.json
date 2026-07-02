@@ -14,9 +14,6 @@
    "modesNote": {
       "message": "Speeds up only enough to cut latency, then rests at 1.0x (which holds the latency). Less buffer = closer to live, but needs a better connection."
    },
-   "minWarning": {
-      "message": ""
-   },
    "modeOff": {
       "message": "Off"
    },
