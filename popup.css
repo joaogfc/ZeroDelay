@@ -215,14 +215,17 @@ body {
     --o-y: 0.05em;
     position: relative;
     display: inline-block;
-    width: 0.6em;
-    height: 0.6em;
+    width: 0.58em;
+    height: 0.58em;
+    /* Breathing room so it doesn't glue to the r / D. */
+    margin: 0 0.12em;
     vertical-align: baseline;
     transform: translateY(var(--o-y));
     box-sizing: border-box;
-    border: 0.16em solid currentColor;
-    border-radius: 0.08em;
-    transition: border-color 280ms var(--spring), border-radius 280ms var(--spring), background 220ms var(--ease), box-shadow 220ms var(--ease);
+    border: 0.17em solid currentColor;
+    /* Degraded: hard square corners = clearly a pixel-art "o". */
+    border-radius: 0;
+    transition: border-color 280ms var(--spring), border-radius 320ms var(--spring), background 220ms var(--ease), box-shadow 220ms var(--ease);
 }
 
 [data-signal="synced"] .brand-o {
@@ -312,7 +315,7 @@ body {
 .mode-cards {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
 
 .mode-card {
