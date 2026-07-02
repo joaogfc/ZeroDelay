@@ -413,7 +413,7 @@ function renderSupport() {
         if (open) render();
     };
     toggle.addEventListener('click', () => setOpen(panel.hidden));
-    ctaBtn.addEventListener('click', () => setOpen(true));
+    ctaBtn.addEventListener('click', () => setOpen(panel.hidden));
 
     // ----- Gentle, optional donation invite ---------------------------------
     const nudge = $('#support-nudge');
