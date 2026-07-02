@@ -111,8 +111,8 @@ const cup = d => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true
 const COFFEE = {
     1: cup('<path d="M4 4h16v2H4zm0 2h2v8H4zm2 8h10v2H6zm14-8h2v4h-2zm-2 4h2v2h-2zm-2-4h2v8h-2zM2 18h18v2H2z"/>'),
     3: cup('<path d="M4 6h16v2H4zm0 2h2v10H4zm2 10h10v2H6zM20 8h2v4h-2zm-2 4h2v2h-2zm-2-4h2v10h-2zM7 2h2v2H7zm6 0h2v2h-2zM9 0h2v2H9zm6 0h2v2h-2zm-5 8h2v4h-2zm-2 4h6v4H8z"/>'),
-    5: cup('<path d="M13 1h2v4h-2zM6 5h12v2H6zM7 7h2v11H7zm8 0h2v11h-2zM7 18h10v2H7z"/>'),
-    10: cup('<path d="M9 3h6v2H9zM7 5h10v2H7zm0 2h2v9H7zm8 0h2v9h-2zm-8 9h10v2H7zM4 18h14v2H4z"/>'),
+    5: cup('<path d="M7 3h10v2H7zM5 5h14v2H5zM6 7h2v10H6zm10 0h2v10h-2zM8 17h8v2H8z"/>'),
+    10: cup('<path d="M8 3h8v2H8zM6 5h12v2H6zM6 7h2v8H6zm9 0h2v8h-2zm-9 8h11v2H6zM17 9h3v2h-3zm2 2h1v2h-1zm-2 2h3v2h-3zM4 18h14v2H4z"/>'),
 };
 
 // --------------------------------------------------------------- State

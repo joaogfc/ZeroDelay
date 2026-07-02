@@ -42,6 +42,8 @@
     --sync-strong: var(--accent-strong);
     --sync-soft: var(--accent-soft);
     --sync-glow: var(--accent-glow);
+    /* Solid-ish red for the "sticker" offset shadow of live/selected elements. */
+    --sync-ghost: rgba(255, 0, 51, 0.5);
 
     /* The "behind live / raw signal" state — YouTube's grayed-out live badge. */
     --degraded: #909090;
@@ -357,7 +359,7 @@ body {
     width: 100%;
     text-align: left;
     padding: 13px 14px;
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
     color: inherit;
@@ -383,13 +385,13 @@ body {
     transform: scale(0.99);
 }
 
-/* Selected = synced: the card locks to live-red and pops off a hard red offset
- * shadow — part sticker lift, part broadcast chroma-ghost. */
+/* Selected = synced: the card locks to live-red and pops hard off a solid red
+ * offset shadow — part sticker lift, part broadcast chroma-ghost. */
 .mode-card[aria-checked="true"] {
     border-color: var(--sync);
     background: linear-gradient(180deg, var(--sync-soft), transparent 140%);
-    box-shadow: 0 0 0 1px var(--sync), 5px 5px 0 0 var(--sync-glow);
-    transform: translate(-1px, -1px);
+    box-shadow: 0 0 0 2px var(--sync), 7px 7px 0 0 var(--sync-ghost);
+    transform: translate(-2px, -2px);
 }
 
 .mode-icon {
@@ -1011,25 +1013,29 @@ body {
     gap: 8px;
 }
 
+/* Amount chips as chunky sticker tiles — coffee glyph stacked over the value,
+ * squarer and bigger, and they pop off a shadow (red when selected/live). */
 .support-chip {
-    flex: 1 1 auto;
-    min-width: 60px;
+    flex: 1 1 84px;
+    min-width: 84px;
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
+    padding: 12px 8px;
+    border: 2px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--surface-2);
     color: var(--text);
     font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     text-align: center;
     cursor: pointer;
     font-variant-numeric: tabular-nums;
-    transition: border-color 150ms var(--ease), background 150ms var(--ease), color 150ms var(--ease);
+    box-shadow: 0 0 0 0 var(--pop);
+    transition: border-color 150ms var(--ease), background 150ms var(--ease), color 150ms var(--ease), transform 120ms var(--spring), box-shadow 120ms var(--ease);
 }
 
 /* Coffee glyph inside each amount chip — grows fancier with the tip. */
@@ -1039,8 +1045,8 @@ body {
 }
 
 .chip-ico svg {
-    width: 15px;
-    height: 15px;
+    width: 24px;
+    height: 24px;
     display: block;
 }
 
@@ -1050,12 +1056,21 @@ body {
 
 .support-chip:hover {
     border-color: var(--text-faint);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 0 var(--pop);
+}
+
+.support-chip:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 0 var(--pop);
 }
 
 .support-chip[aria-checked="true"] {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent-strong);
+    border-color: var(--sync);
+    background: var(--sync-soft);
+    color: var(--sync-strong);
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 0 var(--sync-ghost);
 }
 
 .support-custom {
