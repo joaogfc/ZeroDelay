@@ -64,6 +64,24 @@ function main(common) {
         if (msg?.type === 'go-live') dispatchGoLive();
     }
 
+    function onChannelIdUpdate(msg) {
+        if (!msg?.channelId) return;
+
+        chrome.storage.local.get([common.currentChannelIdKey, common.channelModesKey], data => {
+            const channelId = msg.channelId;
+            const payload = { [common.currentChannelIdKey]: channelId };
+            const suggestedMode = common.getSuggestedModeForChannel(data, channelId);
+
+            if (suggestedMode) {
+                Object.assign(payload, common.presets[suggestedMode]);
+            } else {
+                Object.assign(payload, common.presets.auto);
+            }
+
+            chrome.storage.local.set(payload);
+        });
+    }
+
     // Guard against double-registration if the content script re-inits in the
     // same page — listeners would otherwise stack up (PR #17).
     if (!storageListenersAttached) {
@@ -71,6 +89,7 @@ function main(common) {
         chrome.storage.onChanged.addListener(onEngineSettingsChanged);
         chrome.storage.onChanged.addListener(onGoLiveSignalChanged);
         chrome.runtime.onMessage.addListener(onRuntimeMessage);
+        document.addEventListener('_live_catch_up_channel_id', e => onChannelIdUpdate(e.detail));
     }
 
     document.addEventListener('_live_catch_up_init', () => {
