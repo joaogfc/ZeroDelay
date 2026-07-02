@@ -8,39 +8,18 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 });
 
+let storageListenersAttached = false;
 
 function main(common) {
     function loadSettings() {
         chrome.storage.local.get(common.storage, data => {
-            const enabled = common.value(data.enabled, common.defaultEnabled);
-            const playbackRate = common.limitValue(data.playbackRate, common.defaultPlaybackRate, common.minPlaybackRate, common.maxPlaybackRate, common.stepPlaybackRate);
-            const showPlaybackRate = common.value(data.showPlaybackRate, common.defaultShowPlaybackRate);
-            const showLatency = common.value(data.showLatency, common.defaultShowLatency);
-            const showHealth = common.value(data.showHealth, common.defaultShowHealth);
-            const showEstimation = common.value(data.showEstimation, common.defaultShowEstimation);
-            const showCurrent = common.value(data.showCurrent, common.defaultShowCurrent);
-            const bufferTarget = common.limitValue(data.bufferTarget, common.defaultBufferTarget, common.minBufferTarget, common.maxBufferTarget, common.stepBufferTarget);
-            const auto = common.value(data.auto, common.defaultAuto);
-            const skip = common.value(data.skip, common.defaultSkip);
-            const skipThreathold = common.value(data.skipThreathold, common.defaultSkipThreathold);
-
-            sendLoadSettingsEvent(enabled, playbackRate, showPlaybackRate, showLatency, showHealth, showEstimation, showCurrent, bufferTarget, auto, skip, skipThreathold);
+            sendLoadSettingsEvent(common.resolveSettings(data));
         });
     }
 
-    function sendLoadSettingsEvent(enabled, playbackRate, showPlaybackRate, showLatency, showHealth, showEstimation, showCurrent, bufferTarget, auto, skip, skipThreathold) {
+    function sendLoadSettingsEvent(settings) {
         const detailObject = {
-            enabled,
-            playbackRate,
-            showPlaybackRate,
-            showLatency,
-            showHealth,
-            showEstimation,
-            showCurrent,
-            bufferTarget,
-            auto,
-            skip,
-            skipThreathold,
+            ...settings,
             copiedLabel: common.label.supportCopied,
             // Localized aria-labels shipped to the engine (page world has no chrome.i18n).
             a11yLabels: {
@@ -51,37 +30,70 @@ function main(common) {
                 current: common.label.a11yCurrent,
             },
         };
-        const detail = navigator.userAgent.includes('Firefox') ? cloneInto(detailObject, document.defaultView) : detailObject;
+        // Firefox: without cloneInto the page world sees `detail` as null (X-ray
+        // vision). Feature-detect the function — UA sniffing breaks under
+        // privacy.resistFingerprinting or a user-overridden UA.
+        const detail = (typeof cloneInto === 'function') ? cloneInto(detailObject, document.defaultView) : detailObject;
         document.dispatchEvent(new CustomEvent('_live_catch_up_load_settings', { detail }));
     }
 
     let detect_interval;
 
-    chrome.storage.onChanged.addListener(loadSettings);
+    // Reload only when an engine setting actually changed — the donation
+    // counter and control keys write storage frequently, and re-sending
+    // settings to every YouTube frame on each of those writes is pure churn.
+    function onEngineSettingsChanged(changes, area) {
+        if (area === 'local' && common.storage.some(k => k in changes)) loadSettings();
+    }
 
-    // Forward the "jump to live" storage signal to the engine. Any change to the
-    // nonce means "seek to live now"; the value itself is irrelevant.
-    chrome.storage.onChanged.addListener((changes, area) => {
-        if (area === 'local' && changes[common.goLiveSignalKey]) {
-            document.dispatchEvent(new CustomEvent('_live_catch_up_go_live'));
-        }
-    });
+    /** Tell the engine (inject.js) to jump to the live edge now. */
+    function dispatchGoLive() {
+        document.dispatchEvent(new CustomEvent('_live_catch_up_go_live'));
+    }
+
+    // Legacy/global signal: still forwarded for compatibility, but the "go-live"
+    // shortcut no longer writes it (see background.js) — every tab reacting to
+    // this key is exactly the behavior that shortcut was moved away from (PR #16).
+    function onGoLiveSignalChanged(changes, area) {
+        if (area === 'local' && changes[common.goLiveSignalKey]) dispatchGoLive();
+    }
+
+    // Active-tab-only path: background.js sends this directly to the tab the
+    // "go-live" shortcut was pressed on (PR #16).
+    function onRuntimeMessage(msg) {
+        if (msg?.type === 'go-live') dispatchGoLive();
+    }
+
+    // Guard against double-registration if the content script re-inits in the
+    // same page — listeners would otherwise stack up (PR #17).
+    if (!storageListenersAttached) {
+        storageListenersAttached = true;
+        chrome.storage.onChanged.addListener(onEngineSettingsChanged);
+        chrome.storage.onChanged.addListener(onGoLiveSignalChanged);
+        chrome.runtime.onMessage.addListener(onRuntimeMessage);
+    }
 
     document.addEventListener('_live_catch_up_init', () => {
         clearInterval(detect_interval);
-        detect_interval = setInterval(() => {
+        let my_interval;
+        my_interval = detect_interval = setInterval(() => {
             const player = document.getElementById("movie_player");
             if (!player) {
                 return;
             }
 
-            clearInterval(detect_interval);
+            clearInterval(my_interval);
+            if (detect_interval === my_interval) detect_interval = null;
 
             loadSettings();
         }, 500);
     });
 
-    document.addEventListener('_live_catch_up_stall', () => onStallDetected(common));
+    // Top frame only: the offer card must land on the visible page, not inside
+    // an iframe's (clipped) body.
+    if (window.top === window) {
+        document.addEventListener('_live_catch_up_stall', () => onStallDetected(common));
+    }
 
     // Inject the controller first, then the engine. `async = false` preserves
     // execution order for dynamically-inserted scripts, so window.ZeroDelay is
@@ -105,9 +117,7 @@ function main(common) {
 function initDonation(common) {
     const TICK = 60; // seconds
 
-    chrome.storage.local.get(['donateInstalledAt'], d => {
-        if (!d.donateInstalledAt) chrome.storage.local.set({ donateInstalledAt: Date.now() });
-    });
+    common.ensureInstalledAt();
 
     // The engine pings while a live is actually playing; only that time counts as
     // "watching the transmission" (idle browsing on YouTube doesn't accrue usage).
@@ -117,9 +127,17 @@ function initDonation(common) {
     setTimeout(() => maybeShowBanner(common), 8000);
     setInterval(() => {
         if (document.hidden || Date.now() - lastActive > 5000) return;
-        chrome.storage.local.get(['enabled', 'donateUsageSeconds'], d => {
+        chrome.storage.local.get(['enabled', 'donateUsageSeconds', 'donateLastCountedAt'], d => {
             if (!common.value(d.enabled, common.defaultEnabled)) return;
-            chrome.storage.local.set({ donateUsageSeconds: (d.donateUsageSeconds || 0) + TICK });
+            // Every YouTube tab runs this loop; only one may count each minute
+            // of wall-clock time, or N tabs would accrue N× the real usage.
+            // (5s of slack absorbs timer jitter between the tabs.)
+            const now = Date.now();
+            if (now - (d.donateLastCountedAt || 0) < (TICK - 5) * 1000) return;
+            chrome.storage.local.set({
+                donateUsageSeconds: (d.donateUsageSeconds || 0) + TICK,
+                donateLastCountedAt: now,
+            });
             maybeShowBanner(common);
         });
     }, TICK * 1000);
@@ -137,51 +155,66 @@ function maybeShowBanner(common) {
     });
 }
 
-function showDonationBanner(common) {
-    const L = common.label;
+// Shared chrome for the two floating cards (donation banner / stall offer):
+// same look and lifecycle — CTA + close button, fade in, auto-hide, fade out.
+function buildOverlayCard({ side, maxWidth, content, ctaLabel, onCta, closeLabel, autoHideMs, onRemove }) {
     let autoHide;
+    let removed = false;
 
     const card = document.createElement('div');
     card.style.cssText = [
-        'position:fixed', 'z-index:2147483646', 'right:16px', 'bottom:16px', 'max-width:300px',
-        'display:flex', 'align-items:center', 'gap:10px', 'padding:12px 14px', 'border-radius:12px',
+        'position:fixed', 'z-index:2147483646', `${side}:16px`, 'bottom:16px', `max-width:${maxWidth}`,
+        'display:flex', 'align-items:center', 'gap:12px', 'padding:13px 15px', 'border-radius:12px',
         'background:#1c1c1c', 'color:#f1f1f1', 'border:1px solid #3a3a3a',
         'box-shadow:0 10px 30px rgba(0,0,0,.45)',
         'font:500 13px/1.4 Roboto,"Segoe UI",system-ui,sans-serif',
         'opacity:0', 'transform:translateY(8px)', 'transition:opacity .25s,transform .25s',
     ].join(';');
 
-    const text = document.createElement('span');
-    text.textContent = L.donateBannerText;
-    text.style.cssText = 'flex:1;min-width:0';
-
     const cta = document.createElement('button');
-    cta.textContent = L.donateBannerCta;
-    cta.style.cssText = 'flex:none;cursor:pointer;border:0;border-radius:999px;padding:7px 14px;'
+    cta.textContent = ctaLabel;
+    cta.style.cssText = 'flex:none;cursor:pointer;border:0;border-radius:999px;padding:8px 14px;'
         + 'font:600 12px Roboto,system-ui,sans-serif;background:#ff0033;color:#fff';
 
     const close = document.createElement('button');
     close.textContent = '✕';
-    close.setAttribute('aria-label', L.donateBannerClose);
+    close.setAttribute('aria-label', closeLabel);
     close.style.cssText = 'flex:none;cursor:pointer;border:0;background:transparent;color:#aaa;font-size:14px;padding:2px 4px';
 
     const remove = () => {
-        if (!donationBannerEl) return;
-        donationBannerEl = null;
+        if (removed) return;
+        removed = true;
         clearTimeout(autoHide);
         card.style.opacity = '0';
         card.style.transform = 'translateY(8px)';
         setTimeout(() => card.remove(), 250);
+        onRemove();
     };
 
-    cta.addEventListener('click', () => { chrome.runtime.sendMessage({ type: 'donate-open' }); remove(); });
+    cta.addEventListener('click', () => { onCta(); remove(); });
     close.addEventListener('click', remove);
 
-    card.append(text, cta, close);
+    card.append(content, cta, close);
     document.body.append(card);
-    donationBannerEl = card;
     requestAnimationFrame(() => { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; });
-    autoHide = setTimeout(remove, 15000);
+    autoHide = setTimeout(remove, autoHideMs);
+    return card;
+}
+
+function showDonationBanner(common) {
+    const L = common.label;
+    const text = document.createElement('span');
+    text.textContent = L.donateBannerText;
+    text.style.cssText = 'flex:1;min-width:0';
+
+    donationBannerEl = buildOverlayCard({
+        side: 'right', maxWidth: '300px', content: text,
+        ctaLabel: L.donateBannerCta,
+        onCta: () => chrome.runtime.sendMessage({ type: 'donate-open' }),
+        closeLabel: L.donateBannerClose,
+        autoHideMs: 15000,
+        onRemove: () => { donationBannerEl = null; },
+    });
 }
 
 // --------------------------------------------------------------- Stall offer
@@ -204,17 +237,6 @@ function showStallOffer(common, target) {
     if (stallOfferEl) return;
     stallOfferShown = true;
     const L = common.label;
-    let autoHide;
-
-    const card = document.createElement('div');
-    card.style.cssText = [
-        'position:fixed', 'z-index:2147483646', 'left:16px', 'bottom:16px', 'max-width:330px',
-        'display:flex', 'align-items:center', 'gap:12px', 'padding:13px 15px', 'border-radius:12px',
-        'background:#1c1c1c', 'color:#f1f1f1', 'border:1px solid #3a3a3a',
-        'box-shadow:0 10px 30px rgba(0,0,0,.45)',
-        'font:500 13px/1.4 Roboto,"Segoe UI",system-ui,sans-serif',
-        'opacity:0', 'transform:translateY(8px)', 'transition:opacity .25s,transform .25s',
-    ].join(';');
 
     const body = document.createElement('div');
     body.style.cssText = 'flex:1;min-width:0';
@@ -226,31 +248,12 @@ function showStallOffer(common, target) {
     desc.style.cssText = 'font-size:12px;color:#bbb;margin-top:2px';
     body.append(title, desc);
 
-    const cta = document.createElement('button');
-    cta.textContent = `${L.stallSwitch} ${common.modeMeta[target].title}`;
-    cta.style.cssText = 'flex:none;cursor:pointer;border:0;border-radius:999px;padding:8px 14px;'
-        + 'font:600 12px Roboto,system-ui,sans-serif;background:#ff0033;color:#fff';
-
-    const close = document.createElement('button');
-    close.textContent = '✕';
-    close.setAttribute('aria-label', L.donateBannerClose);
-    close.style.cssText = 'flex:none;cursor:pointer;border:0;background:transparent;color:#aaa;font-size:14px;padding:2px 4px';
-
-    const remove = () => {
-        if (!stallOfferEl) return;
-        stallOfferEl = null;
-        clearTimeout(autoHide);
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(8px)';
-        setTimeout(() => card.remove(), 250);
-    };
-
-    cta.addEventListener('click', () => { chrome.storage.local.set(common.presets[target]); remove(); });
-    close.addEventListener('click', remove);
-
-    card.append(body, cta, close);
-    document.body.append(card);
-    stallOfferEl = card;
-    requestAnimationFrame(() => { card.style.opacity = '1'; card.style.transform = 'translateY(0)'; });
-    autoHide = setTimeout(remove, 14000);
+    stallOfferEl = buildOverlayCard({
+        side: 'left', maxWidth: '330px', content: body,
+        ctaLabel: `${L.stallSwitch} ${common.modeMeta[target].title}`,
+        onCta: () => chrome.storage.local.set(common.presets[target]),
+        closeLabel: L.donateBannerClose,
+        autoHideMs: 14000,
+        onRemove: () => { stallOfferEl = null; },
+    });
 }

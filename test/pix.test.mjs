@@ -37,6 +37,13 @@ test('buildPixCode: open amount (0 / undefined) omits the 54 field', () => {
     assert.ok(!buildPixCode().includes('54045.00'), 'no fixed amount present');
 });
 
+test('buildPixCode: absurd amounts fall back to an open code (no exponential toFixed)', () => {
+    // >= 1e21 makes Number#toFixed return exponential notation, which would
+    // corrupt the EMV field — such values must be treated as "no amount".
+    assert.ok(buildPixCode(1e21).includes('53039865802BR'), 'currency directly followed by country');
+    assert.ok(!buildPixCode(1e21).includes('e+'), 'no exponential notation in the payload');
+});
+
 test('buildPixCode: the trailing CRC is self-consistent', () => {
     const code = buildPixCode(3);
     const body = code.slice(0, -4);          // everything up to & including "6304"

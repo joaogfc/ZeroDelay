@@ -7,6 +7,9 @@
    "license": "GPL-3.0-or-later",
    "author": "João Gustavo França <joao@solitus.com.br>",
    "homepage": "https://github.com/joaogfc/ZeroDelay",
+   "engines": {
+      "node": ">=22.2"
+   },
    "scripts": {
       "test": "node --test",
       "validate": "node scripts/validate.mjs",

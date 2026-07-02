@@ -9,6 +9,7 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **Botão "Ir ao Vivo"**: Adicionado botão de ação rápida diretamente no popup para saltar manualmente para o tempo real da live.
 - **Idiomas**: interface em espanhol (`es`) e francês (`fr`), além de inglês e
   português. A doação segue o idioma (Buy me a coffee fora do pt-BR). O
   `check:locales` agora valida todos os locales contra o `en`.
@@ -54,6 +55,50 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   fundo circular. Os SVG inline sem `xmlns` caíam no namespace nulo ao serem
   parseados como `image/svg+xml`; `parseSvg` agora usa `text/html`, que aplica o
   namespace SVG corretamente. O QR Code do PIX segue funcionando.
+- **Firefox**: a detecção de `cloneInto` passou a ser por feature detection em
+  vez de sniffing de user agent — com `privacy.resistFingerprinting` (ou UA
+  alterado) a extensão ficava silenciosamente inoperante. O motor também ignora
+  eventos de settings cujo `detail` não atravessou os mundos (X-ray).
+- PIX restrito a `pt-BR`: usuários de `pt-PT` viam o QR do PIX (inutilizável em
+  Portugal) em vez do link internacional de doação.
+- O contador de uso da doação não infla mais com várias abas abertas (só uma
+  aba contabiliza cada minuto de relógio).
+- O atalho de ativar/desativar (`Alt+Shift+Y`) voltava a gravar "desligado" em
+  dados legados (`enabled=false` sem preset completo) — agora religa na
+  primeira pressão.
+- O popup se mantém sincronizado com mudanças externas (atalho de teclado,
+  oferta de troca de modo no player) enquanto está aberto.
+- O estado do controlador de catch-up (EMAs, histerese) é zerado ao navegar
+  entre lives — decisões dos primeiros segundos não usam mais dados da
+  transmissão anterior.
+- Indicadores não exibem mais `NaN` quando o player não reporta latência ou
+  buffer; o chip de "copiar link" não gera mais URL com `v=undefined`.
+- `bump.mjs` agora versiona também `manifest.firefox.json` e
+  `package-lock.json`; `validate.mjs` valida os dois manifests e acusa
+  divergência de versão entre eles.
+- Vazamentos de memória em navegações consecutivas: listener preso ao
+  `<video>` antigo quando o YouTube trocava o elemento (ex.: live → live) sem
+  removê-lo; risco de listeners duplicados em `chrome.storage.onChanged` caso
+  o content script fosse reinicializado na mesma aba; e uma race condition no
+  `setInterval` de detecção do player quando `yt-navigate-finish` disparava em
+  sequência rápida (PR #17).
+
+### Alterado (interno)
+
+- Pacote da Chrome Web Store gerado por **whitelist** de arquivos (como no
+  build do Firefox) — um arquivo estranho na árvore não pode mais vazar no zip.
+- Detecção do player com back-off (20s rápidos, depois sondagem lenta) em vez
+  de polling de 500ms para sempre em páginas/frames sem live; recarga de
+  settings só quando uma chave do motor realmente muda.
+- Deduplicações: resolução de settings unificada em `common.resolveSettings`,
+  cards flutuantes (doação/stall) num único construtor, `ensureInstalledAt`
+  compartilhado; removidos eventos e UI mortos
+  (`_live_catch_up_onPlaybackRateChange`, `_live_catch_up_reset_playback_rate`,
+  `#mode-warning`/`minWarning`).
+- Radiogroup de valores do PIX navegável por teclado (setas/Home/End), `lang`
+  do popup segue o idioma real da interface.
+- CI usa `npm ci`; `package.json` declara `engines.node >= 22.2`; versões dos
+  manifests normalizadas para `1.1.0`.
 
 ## [1.1.0] - 2026-06-30
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<!-- lang is set to the real UI language by popup.js at startup -->
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
@@ -57,10 +58,18 @@
             </div>
         </section>
 
+        <section class="quick-actions">
+            <button id="go-live-action" class="go-live-action" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="go-live-label" class="go-live-label"></span>
+            </button>
+        </section>
+
         <section class="modes" aria-labelledby="modes-title">
             <h2 id="modes-title" class="section-title"></h2>
             <div id="mode-cards" class="mode-cards" role="radiogroup"></div>
-            <p id="mode-warning" class="mode-warning" hidden></p>
             <p id="modes-note" class="modes-note"></p>
         </section>
 

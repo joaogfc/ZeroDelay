@@ -43,7 +43,9 @@ export function crc16(payload) {
 // bank app).
 export function buildPixCode(amount) {
     const merchantAccount = field('00', 'br.gov.bcb.pix') + field('01', PIX_KEY);
-    const hasAmount = Number.isFinite(amount) && amount > 0;
+    // Upper bound keeps toFixed() in plain decimal notation (>= 1e21 would go
+    // exponential and corrupt the EMV field); out-of-range -> open amount.
+    const hasAmount = Number.isFinite(amount) && amount > 0 && amount < 1e9;
     const body =
         field('00', '01') +                          // Payload Format Indicator
         field('26', merchantAccount) +               // Merchant Account Info (Pix)

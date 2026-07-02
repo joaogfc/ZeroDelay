@@ -45,7 +45,7 @@ O ponto único de falha era o acoplamento do motor a APIs internas do YouTube, a
 | ✅ H5 | Remover código morto (`calc_threathold`/`calc_segduration`) | **P1** | 15 min | Baixo |
 | ✅ U1 | Atalhos de teclado (`commands`: liga/desliga, ir ao vivo) | P2 | 2 h | Médio |
 | ✅ U2 | A11y: navegação por setas no radiogroup + `aria-label` nos indicadores | P2 | 2 h | Médio |
-| U3 | Suporte a Firefox (`browser_specific_settings`) | P2 | 1–2 h | Médio |
+| ✅ U3 | Suporte a Firefox (`browser_specific_settings`) | P2 | 1–2 h | Médio |
 | U4 | Docs de dev (README dev, CHANGELOG, CONTRIBUTING) | P2 | 2 h | Baixo |
 | U5 | Memória de modo por canal + chip “ir ao vivo” no popup | P2 | 3–4 h | Baixo |
 
@@ -181,10 +181,15 @@ Maior alavanca de qualidade. Tudo abaixo é determinístico e testável sem DOM:
   de modo; `aria-label` localizados nos indicadores (viajam no detalhe das
   settings, pois o motor não acessa `chrome.i18n`).
 
-### U3 — Firefox
-- `content.js:46` já usa `cloneInto` (intenção de Firefox), mas falta
-  `browser_specific_settings.gecko`. Adicionar id/versão mínima e validar o service
-  worker MV3 no Firefox atual.
+### U3 — Firefox — ✅ Manifesto/build implementados; validação externa pendente
+- Implementado: `manifest.firefox.json` com `browser_specific_settings.gecko`
+  (id `zerodelay@joaogfc`, `strict_min_version` 140) e bloco `gecko_android`
+  (`strict_min_version` 142). O `background` do manifesto Firefox usa
+  `scripts` + `type: module` (não service worker). Build via
+  `scripts/build-firefox.cjs` (`npm run build:firefox`), com `data_collection_permissions`
+  já declarado (`required: ["none"]`). `content.js:46` usa `cloneInto`.
+- Pendente (não comprovado no repo): teste em Firefox para Android e a
+  publicação/validação na AMO (assinatura e envio do pacote).
 
 ### U4 — Documentação de dev
 - README de desenvolvimento (carregar sem empacotar, `npm run build`), `CHANGELOG.md`

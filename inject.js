@@ -5,9 +5,12 @@
     // Catch-up control logic lives in engine/controller.js (a classic script
     // injected just before this one) — unit-tested in test/controller.test.mjs.
     // If it somehow didn't load, we stay safely at 1.0x (no acceleration).
-    const controller = (typeof window !== 'undefined' && window.ZeroDelay && typeof window.ZeroDelay.createController === 'function')
-        ? window.ZeroDelay.createController()
+    // A fresh controller is created per attach (see detect_and_attach) so one
+    // stream's EMAs/hysteresis never steer the first seconds of the next one.
+    const controllerFactory = (typeof window !== 'undefined' && window.ZeroDelay && typeof window.ZeroDelay.createController === 'function')
+        ? window.ZeroDelay.createController
         : null;
+    let controller = controllerFactory ? controllerFactory() : null;
     // Buffer level below which the health indicator turns red — shared with the
     // controller's own back-off threshold (falls back if the controller is absent).
     const BUFFER_WARN = controller ? controller.WARN_BUFFER : 2.5;
@@ -46,7 +49,7 @@
 
     function update_latency(latency, isAtLiveHead) {
         if (isAtLiveHead) {
-            setChip(button_latency, latency.toFixed(2) + 's');
+            setChip(button_latency, isFinite(latency) ? latency.toFixed(2) + 's' : '—');
         } else {
             setChip(button_latency, '(DVR)');
         }
@@ -59,7 +62,7 @@
     }
 
     function update_health(health) {
-        setChip(button_health, health.toFixed(2) + 's');
+        setChip(button_health, isFinite(health) ? health.toFixed(2) + 's' : '—');
 
         // Warn (red) when the buffer is running low.
         if (health < BUFFER_WARN) {
@@ -76,9 +79,13 @@
     }
 
     function update_estimation(seekableEnd, current, isAtLiveHead) {
+        const video = video_instance();
+        if (!video) {
+            hide_estimation();
+            return;
+        }
         addWithLimit(seekableEnds, seekableEnd);
         const streamHasProbablyEnded = allElementsEqual(seekableEnds);
-        const video = video_instance();
         const estimated_seconds = (seekableEnd - current) / (streamHasProbablyEnded ? video.playbackRate : video.playbackRate - 1.0);
         if (!isAtLiveHead && isFinite(estimated_seconds)) {
             const estimated_time = new Date(Date.now() + estimated_seconds * 1000.0).toLocaleTimeString();
@@ -103,8 +110,12 @@
             setChip(button_current, current_time + ' / ' + seekableEnd_time);
         }
 
-        const current_time_url = addParamsToUrl('https://www.youtube.com/watch', { v: videoId, t: format_time_hms(current) });
-        button_current.setAttribute('current', `${current_time_url}#\n${current_time}`);
+        if (videoId) {
+            const current_time_url = addParamsToUrl('https://www.youtube.com/watch', { v: videoId, t: format_time_hms(current) });
+            button_current.setAttribute('current', `${current_time_url}#\n${current_time}`);
+        } else {
+            button_current.removeAttribute('current'); // no video id — nothing valid to copy
+        }
 
         button_current.style.display = 'inline-block';
     }
@@ -153,15 +164,10 @@
     }
 
     // Catch-up control logic + its tunables/state now live in
-    // engine/controller.js (unit-tested via test/controller.test.mjs). The dead
-    // helpers calc_threathold / calc_segduration were removed here — nothing
-    // ever called them.
+    // engine/controller.js (unit-tested via test/controller.test.mjs).
 
-    function onPlaybackRateChange() {
-        document.dispatchEvent(new CustomEvent('_live_catch_up_onPlaybackRateChange'));
-    }
-
-    function skip_if_over_threathold(latency, skipThreathold) {
+    // (`skipThreathold` keeps the storage key's historical typo — see common.js.)
+    function skip_if_over_threshold(latency, skipThreathold) {
         if (!caps?.seekLive || !caps?.stateObject) return;
         if (player && latency >= skipThreathold) {
             if (player.getPlayerStateObject()?.isPlaying) {
@@ -259,7 +265,9 @@
 
     const button_current = create_elem('button', ['_live_catch_up_current', 'ytp-button']);
     button_current.addEventListener('click', () => {
-        navigator.clipboard.writeText(button_current.getAttribute('current'));
+        const link = button_current.getAttribute('current');
+        if (!link) return;
+        navigator.clipboard.writeText(link);
 
         msg_current.style.translate = '-32px -16px';
         msg_current.style.display = 'inline-block';
@@ -395,7 +403,7 @@
         }
 
         if (settings.skip) {
-            skip_if_over_threathold(latency, settings.skipThreathold);
+            skip_if_over_threshold(latency, settings.skipThreathold);
         }
 
         const want_update = interval_count++ % 4 === 0;
@@ -430,22 +438,20 @@
 
     document.addEventListener('_live_catch_up_load_settings', e => {
         const settings = e.detail;
+        if (!settings) return; // Firefox X-ray edge: detail failed to cross worlds
         current_settings = settings;
         if (settings.copiedLabel) {
             setChip(msg_current, settings.copiedLabel);
         }
         apply_a11y_labels(settings.a11yLabels);
         clearInterval(interval);
+        if (engine_degraded) return; // paused until the next navigation retries
         if (settings.enabled || settings.skip || settings.showPlaybackRate || settings.showLatency || settings.showHealth || settings.showEstimation || settings.showCurrent) {
             interval = setInterval(guarded_tick, 250);
         } else {
             reset_playbackRate();
             hideAllIndicators();
         }
-    });
-
-    document.addEventListener('_live_catch_up_reset_playback_rate', () => {
-        reset_playbackRate();
     });
 
     document.addEventListener('_live_catch_up_go_live', seek_to_live);
@@ -465,7 +471,7 @@
         const v = video_instance();
         if (!v) return false;
 
-        const time_display = document.getElementsByTagName('player-time-display')?.[0];
+        const time_display = document.getElementsByTagName('player-time-display')[0];
         let area;
         let button_live_badge;
         if (time_display) { // new-style YouTube embedded player
@@ -488,8 +494,19 @@
         engine_degraded = false;
         tick_errors = 0;
 
+        // Fresh stream, fresh controller state: EMAs/hysteresis measured on the
+        // previous live must not steer the first seconds of this one.
+        // (applied_rate is kept — apply_playback_rate's divergence logic already
+        // handles whatever rate the new player starts at.)
+        if (controllerFactory) controller = controllerFactory();
+        seekableEnds = [];
+
         if (bound_video !== v) {
-            v.addEventListener('ratechange', onPlaybackRateChange);
+            // Detach the previous <video>'s listener before binding the new one,
+            // so the old element can be garbage-collected after a live→live
+            // navigation instead of being pinned by the closure (PR #17). The
+            // `ratechange` listener was dropped entirely — nothing consumes it.
+            if (bound_video) bound_video.removeEventListener('waiting', on_video_waiting);
             v.addEventListener('waiting', on_video_waiting);
             bound_video = v;
         }
@@ -506,20 +523,33 @@
         return true;
     }
 
-    function start_detection() {
-        if (detect_interval) return;       // already polling
+    const FAST_DETECT_MS = 500;
+    const SLOW_DETECT_MS = 5000;
+    const FAST_DETECT_ATTEMPTS = 40;   // ~20s of fast polling, then back off
+
+    function stop_detection() {
+        clearInterval(detect_interval);
+        detect_interval = null;
+    }
+
+    // Poll fast right after (re)load/navigation, when the player bar is about
+    // to appear. Most frames (VOD pages, playerless iframes) never get a live
+    // player, so after FAST_DETECT_ATTEMPTS we drop to a slow probe instead of
+    // polling at 500ms forever — still catching pages that only *become* a live
+    // later (premieres / scheduled streams) without any navigation event.
+    function start_detection(fast = true) {
+        stop_detection();
         if (detect_and_attach()) return;   // ready right now
+        let attempts = 0;
         detect_interval = setInterval(() => {
-            if (detect_and_attach()) {
-                clearInterval(detect_interval);
-                detect_interval = null;
-            }
-        }, 500);
+            if (detect_and_attach()) stop_detection();
+            else if (fast && ++attempts >= FAST_DETECT_ATTEMPTS) start_detection(false);
+        }, fast ? FAST_DETECT_MS : SLOW_DETECT_MS);
     }
 
     start_detection();
 
     // SPA navigation: re-attach (idempotent) so indicators/catch-up survive
     // moving between lives without a full page reload.
-    document.addEventListener('yt-navigate-finish', start_detection);
+    document.addEventListener('yt-navigate-finish', () => start_detection(true));
 })();

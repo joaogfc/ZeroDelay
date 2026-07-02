@@ -10,12 +10,6 @@ import * as common from './common.js';
 const BADGE_TEXT = '•';
 const BADGE_COLOR = '#ff2d52';
 
-function ensureInstalledAt() {
-    chrome.storage.local.get(['donateInstalledAt'], d => {
-        if (!d.donateInstalledAt) chrome.storage.local.set({ donateInstalledAt: Date.now() });
-    });
-}
-
 function evalBadge() {
     chrome.storage.local.get(common.donateKeys, d => {
         if (common.donateEligible(d, Date.now())) {
@@ -28,7 +22,7 @@ function evalBadge() {
 }
 
 function boot() {
-    ensureInstalledAt();
+    common.ensureInstalledAt();
     chrome.alarms.create('donate-eval', { periodInMinutes: 30 });
     evalBadge();
 }
@@ -56,8 +50,24 @@ chrome.runtime.onMessage.addListener(msg => {
 });
 
 /**
- * Handle a keyboard command. The engine only reads `chrome.storage`, so each
- * shortcut writes storage and content.js/inject.js react to the change.
+ * Send the "jump to live" message to the active tab only. Any failure (no
+ * active tab, not a YouTube tab, no content script listening) is swallowed —
+ * the shortcut simply does nothing rather than falling back to a global signal.
+ */
+function goLiveOnActiveTab() {
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        const tab = tabs?.[0];
+        if (!tab?.id) return;
+        chrome.tabs.sendMessage(tab.id, { type: 'go-live' }, () => {
+            void chrome.runtime.lastError; // no listener on that tab — ignore
+        });
+    });
+}
+
+/**
+ * Handle a keyboard command. `toggle-enabled` writes storage, which every
+ * open tab's content script reacts to. `go-live` is scoped to the active tab
+ * only, sent directly via chrome.tabs.sendMessage (see goLiveOnActiveTab).
  * @param {'toggle-enabled'|'go-live'} command - Command id from the manifest.
  */
 function onCommand(command) {
@@ -69,7 +79,7 @@ function onCommand(command) {
             chrome.storage.local.set(patch);
         });
     } else if (command === 'go-live') {
-        common.emitGoLive(v => chrome.storage.local.set(v));
+        goLiveOnActiveTab();
     }
 }
 

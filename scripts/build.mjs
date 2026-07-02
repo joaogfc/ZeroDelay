@@ -1,27 +1,39 @@
 // Produces the Web Store package build/zerodelay-<version>.zip with manifest.json
 // at the ZIP root. Pure Node — no `zip` binary, no dependencies (uses node:zlib
 // for DEFLATE + CRC-32 and writes the ZIP container by hand).
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateRawSync, crc32 } from 'node:zlib';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
-// Everything that is dev-only or not part of the shipped extension.
-const SKIP_DIRS = new Set(['.git', 'node_modules', 'build', 'scripts', 'test', 'publishing', '.github', 'docs', 'dist', 'web-ext-artifacts']);
-const SKIP_FILES = new Set([
-    '.gitignore', '.gitattributes', '.DS_Store', 'Thumbs.db', 'desktop.ini',
-    'ROADMAP.md', 'eslint.config.mjs', 'package.json', 'package-lock.json',
-    'manifest.firefox.json', 'README.md', 'CONTRIBUTORS.md',
-    'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md',
-]);
+// Whitelist: only what the shipped extension actually loads at runtime (same
+// approach as scripts/build-firefox.cjs). With a blacklist, any stray file in
+// the working tree (editor config, notes, .env) would silently leak into the
+// package uploaded to the store.
+const SHIP_FILES = [
+    'manifest.json',
+    'background.js',
+    'common.js',
+    'content.js',
+    'inject.js',
+    'engine/controller.js',
+    'pix.js',
+    'popup.js',
+    'popup.css',
+    'popup.html',
+    'LICENSE',
+    'THIRD-PARTY-NOTICES.md',
+];
+const SHIP_DIRS = [
+    '_locales',
+    'icons',
+    'vendor',
+];
 
 function* walk(dir) {
     for (const name of readdirSync(dir).sort()) {
-        // Skip by name whether it's a dir or a file — in a git submodule `.git`
-        // is a gitlink *file*, not a directory, so a dir-only check misses it.
-        if (SKIP_DIRS.has(name) || SKIP_FILES.has(name)) continue;
         const abs = join(dir, name);
         if (statSync(abs).isDirectory()) yield* walk(abs);
         else yield abs;
@@ -89,16 +101,26 @@ function makeZip(files) {
 
 const version = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8')).version;
 
-const files = [];
-for (const abs of walk(root)) {
-    files.push({ name: relative(root, abs).split(/[\\/]/).join('/'), data: readFileSync(abs) });
-}
+const toEntry = abs => ({ name: relative(root, abs).split(/[\\/]/).join('/'), data: readFileSync(abs) });
 
-const hasManifestAtRoot = files.some(f => f.name === 'manifest.json');
-if (!hasManifestAtRoot) {
-    console.error('✗ manifest.json not found at package root — aborting.');
-    process.exit(1);
+const files = [];
+for (const f of SHIP_FILES) {
+    const abs = join(root, f);
+    if (!existsSync(abs)) {
+        console.error(`✗ missing shipped file: ${f} — aborting.`);
+        process.exit(1);
+    }
+    files.push(toEntry(abs));
 }
+for (const d of SHIP_DIRS) {
+    const abs = join(root, d);
+    if (!existsSync(abs)) {
+        console.error(`✗ missing shipped dir: ${d} — aborting.`);
+        process.exit(1);
+    }
+    for (const file of walk(abs)) files.push(toEntry(file));
+}
+files.sort((a, b) => a.name < b.name ? -1 : 1); // reproducible entry order
 
 mkdirSync(join(root, 'build'), { recursive: true });
 const outName = `zerodelay-${version}.zip`;

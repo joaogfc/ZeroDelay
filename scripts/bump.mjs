@@ -1,5 +1,6 @@
-// Bumps the extension version atomically in manifest.json (source of truth) AND
-// package.json, so the two never drift. Usage: node scripts/bump.mjs [patch|minor|major]
+// Bumps the extension version atomically in manifest.json (source of truth),
+// manifest.firefox.json, package.json AND package-lock.json, so none of them
+// ever drift. Usage: node scripts/bump.mjs [patch|minor|major]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,8 +25,21 @@ const replaceVersion = (path, from, to) => {
 };
 replaceVersion(manifestPath, cur, next);
 
+const fxPath = join(root, 'manifest.firefox.json');
+const fxCur = JSON.parse(readFileSync(fxPath, 'utf8')).version;
+replaceVersion(fxPath, fxCur, next);
+
 const pkgPath = join(root, 'package.json');
 const pkgCur = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
 replaceVersion(pkgPath, pkgCur, next);
 
-console.log(`✓ version ${cur} → ${next} (manifest.json + package.json)`);
+// The lockfile mentions the version twice (root + packages[""]) and other
+// packages may share the same version string, so a blind string replace is
+// unsafe here — update the two fields structurally instead.
+const lockPath = join(root, 'package-lock.json');
+const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
+lock.version = next;
+if (lock.packages?.['']) lock.packages[''].version = next;
+writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
+
+console.log(`✓ version ${cur} → ${next} (manifest.json + manifest.firefox.json + package.json + package-lock.json)`);

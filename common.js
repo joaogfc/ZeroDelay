@@ -11,9 +11,10 @@ const msg = (key, fallback) => {
     return m || fallback || '';
 };
 
-// pt_BR sees PIX; any other browser UI language sees the international donation
-// links instead. Decided automatically — there is no manual switcher.
-export const isBrazil = () => /^pt/i.test((i18n ? i18n.getUILanguage() : '') || '');
+// pt-BR sees PIX; any other browser UI language sees the international donation
+// links instead. Decided automatically — there is no manual switcher. Must match
+// pt-BR specifically: PIX is Brazil-only, and pt-PT users can't use it.
+export const isBrazil = () => /^pt[-_]?br/i.test((i18n ? i18n.getUILanguage() : '') || '');
 
 export const label = {
     // App
@@ -23,7 +24,6 @@ export const label = {
     // Modes / presets
     sectionMode: msg('sectionMode', 'Modo'),
     modesNote: msg('modesNote', 'Acelera só o necessário para reduzir a latência e descansa em 1.0x (que segura a latência). Menos buffer = mais perto do ao vivo, mas pede internet melhor.'),
-    minWarning: msg('minWarning', ''),
 
     modeOff: msg('modeOff', 'Desligado'),
     modeOffDesc: msg('modeOffDesc', 'Reprodução normal, sem ajustes.'),
@@ -101,10 +101,15 @@ export const label = {
     a11yHealth: msg('a11yHealth', 'Saúde do buffer'),
     a11yEstimation: msg('a11yEstimation', 'Horário estimado para alcançar o ao vivo'),
     a11yCurrent: msg('a11yCurrent', 'Tempo atual (clique para copiar o link)'),
+
+    // Go-live quick action (popup button) — reuses the shortcut's i18n string.
+    goLiveBtn: msg('commandGoLiveDesc', 'Jump to live'),
 };
 
 // ---------------------------------------------------------------------------
 // Storage keys (DO NOT rename — existing users have data under these keys).
+// This includes the "skipThreathold" typo: the key is frozen by user data, so
+// identifiers shaped like it stay misspelled on purpose.
 // The engine (content.js / inject.js) still reads every key below; the popup
 // only writes them through presets. showEstimation / showCurrent stay so the
 // engine keeps resolving them (defaulting to off), even though the popup no
@@ -117,7 +122,14 @@ export const storage = ['enabled', 'playbackRate', 'showPlaybackRate', 'showLate
 // OUTSIDE `storage` so the engine ignores them and "Restore defaults" keeps the
 // user's opt-out / snooze choices.
 // ---------------------------------------------------------------------------
-export const donateKeys = ['donateInstalledAt', 'donateUsageSeconds', 'donateOptOut', 'donateSnoozeUntil', 'donateBannerShown'];
+export const donateKeys = ['donateInstalledAt', 'donateUsageSeconds', 'donateOptOut', 'donateSnoozeUntil', 'donateBannerShown', 'donateLastCountedAt'];
+
+/** Record the install time once (ages the donation invite). Callable from any extension context. */
+export function ensureInstalledAt() {
+    chrome.storage.local.get(['donateInstalledAt'], d => {
+        if (!d.donateInstalledAt) chrome.storage.local.set({ donateInstalledAt: Date.now() });
+    });
+}
 
 // ---------------------------------------------------------------------------
 // Control/meta keys, driven by the keyboard shortcuts and the "jump to live"
@@ -125,7 +137,15 @@ export const donateKeys = ['donateInstalledAt', 'donateUsageSeconds', 'donateOpt
 // of `donateKeys` ("Restore defaults" leaves them untouched).
 // ---------------------------------------------------------------------------
 
-/** One-shot "jump to live" nonce; content.js forwards it to the engine. Global by design: every open YouTube tab jumps to live. */
+/**
+ * One-shot "jump to live" nonce; content.js forwards it to the engine.
+ * Legacy/global signal: every open YouTube tab reacts to it, since
+ * `chrome.storage.local` has no per-tab scoping. The "go-live" keyboard
+ * shortcut no longer writes this key — it targets the active tab directly via
+ * `chrome.tabs.sendMessage` (see background.js). Kept for any other caller
+ * that still needs an all-tabs signal; do not use it for anything meant to
+ * affect only the active tab.
+ */
 export const goLiveSignalKey = 'goLiveSignal';
 /** Mode to restore when the toggle shortcut re-enables playback after Off. */
 export const lastModeKey = 'lastMode';
@@ -146,11 +166,15 @@ export function emitGoLive(setter, now = Date.now()) {
  * @returns {{apply: Object, remember: (string|undefined)}} `apply` is the preset to write; `remember` is the mode to store when turning Off (undefined leaves `lastMode` untouched).
  */
 export function toggleEnabledAction(data, lastMode) {
-    const mode = deriveMode(data);
-    if (mode === 'off') {
+    // Anything with enabled=false counts as "off" for the toggle — including
+    // legacy data written before presets existed (e.g. {enabled:false} with
+    // skip left at its default), which deriveMode reports as "custom". Without
+    // this, the first key press would rewrite "off" instead of turning back on.
+    if (!value(data.enabled, defaultEnabled)) {
         const restore = (lastMode && lastMode !== 'off' && presets[lastMode]) ? lastMode : 'auto';
         return { apply: presets[restore], remember: undefined };
     }
+    const mode = deriveMode(data);
     return { apply: presets.off, remember: mode === 'custom' ? undefined : mode };
 }
 export const donateUsageThreshold = 50 * 60;       // ~50 min watching a live (seconds)
@@ -275,16 +299,31 @@ export const modeMeta = {
     min: { title: label.modeMin, desc: label.modeMinDesc, conn: label.modeMinConn, gain: label.modeMinGain },
 };
 
-// Derive which mode is active from the resolved settings.
-export function deriveMode(d) {
-    const r = {
+/**
+ * Resolve raw storage data into a full settings object: defaults applied,
+ * numeric values clamped and snapped. Single source of truth shared by the
+ * content script, the popup and deriveMode.
+ * @param {Object} d - Raw data as read from `chrome.storage.local`.
+ */
+export function resolveSettings(d) {
+    return {
         enabled: value(d.enabled, defaultEnabled),
         playbackRate: limitValue(d.playbackRate, defaultPlaybackRate, minPlaybackRate, maxPlaybackRate, stepPlaybackRate),
-        auto: value(d.auto, defaultAuto),
+        showPlaybackRate: value(d.showPlaybackRate, defaultShowPlaybackRate),
+        showLatency: value(d.showLatency, defaultShowLatency),
+        showHealth: value(d.showHealth, defaultShowHealth),
+        showEstimation: value(d.showEstimation, defaultShowEstimation),
+        showCurrent: value(d.showCurrent, defaultShowCurrent),
         bufferTarget: limitValue(d.bufferTarget, defaultBufferTarget, minBufferTarget, maxBufferTarget, stepBufferTarget),
+        auto: value(d.auto, defaultAuto),
         skip: value(d.skip, defaultSkip),
         skipThreathold: value(d.skipThreathold, defaultSkipThreathold),
     };
+}
+
+// Derive which mode is active from the resolved settings.
+export function deriveMode(d) {
+    const r = resolveSettings(d);
     const eq = (a, b) => Math.abs(a - b) < 0.001;
     for (const name of modeOrder) {
         const preset = presets[name];
@@ -301,29 +340,29 @@ export function deriveMode(d) {
     return 'custom';
 }
 
-export function value(value, default_value) {
-    return value ?? default_value;
+export function value(v, fallback) {
+    return v ?? fallback;
 }
 
-export function limitValue(value, default_value, min_value, max_value, step_value) {
-    return step(range(normalize(value, default_value), min_value, max_value), step_value);
+export function limitValue(v, fallback, min_value, max_value, step_value) {
+    return step(range(normalize(v, fallback), min_value, max_value), step_value);
 }
 
-function isNumber(value) {
-    return Number.isFinite(parseFloat(value));
+function isNumber(v) {
+    return Number.isFinite(parseFloat(v));
 }
 
-function normalize(value, default_value) {
-    return isNumber(value) ? value : default_value;
+function normalize(v, fallback) {
+    return isNumber(v) ? v : fallback;
 }
 
-function range(value, min_value, max_value) {
-    return Math.min(Math.max(value, min_value), max_value);
+function range(v, min_value, max_value) {
+    return Math.min(Math.max(v, min_value), max_value);
 }
 
-function step(value, step_value) {
-    const step = 1.0 / step_value;
-    return Math.round(value * step) / step;
+function step(v, step_value) {
+    const steps_per_unit = 1.0 / step_value;
+    return Math.round(v * steps_per_unit) / steps_per_unit;
 }
 
 export function isLiveChat(url) {
