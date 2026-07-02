@@ -920,16 +920,19 @@ body {
 @keyframes balloon-pop {
     0% {
         opacity: 0;
-        transform: scale(0.35) translateY(-8px);
+        transform: scale(0.2) translate(8px, -12px);
     }
 
-    55% {
+    45% {
         opacity: 1;
-        transform: scale(1.1) translateY(0);
     }
 
-    72% {
-        transform: scale(0.96);
+    62% {
+        transform: scale(1.06) translate(0, 0);
+    }
+
+    80% {
+        transform: scale(0.985);
     }
 
     100% {
@@ -937,22 +940,23 @@ body {
     }
 }
 
-/* Periodic attention wiggle — quick rock around the tail, then still. */
+/* Periodic attention nudge — a gentle, elegant sway with a soft breath, around
+ * the tail, then settles. */
 @keyframes balloon-nudge {
-    0%, 8%, 100% {
-        transform: rotate(0deg);
+    0%, 13%, 100% {
+        transform: rotate(0deg) scale(1);
     }
 
-    2% {
-        transform: rotate(-2.5deg);
-    }
-
-    4.5% {
-        transform: rotate(2.5deg);
+    3% {
+        transform: rotate(-1.6deg) scale(1.015);
     }
 
     6.5% {
-        transform: rotate(-1.2deg);
+        transform: rotate(1.1deg) scale(1.008);
+    }
+
+    9.5% {
+        transform: rotate(-0.5deg);
     }
 }
 
@@ -1070,37 +1074,40 @@ body {
     display: none;
 }
 
-/* Three little steam wisps that rise off the cup while the chip is hovered. */
+/* Wispy steam that rises off the cup while the chip is hovered — same curvy,
+ * smooth feel as the Apoiar button (a masked SVG filled with the chip's colour,
+ * eased, not stepped). */
 .chip-ico::after {
     content: "";
     position: absolute;
     left: 50%;
-    top: -3px;
-    width: 2px;
-    height: 2px;
-    border-radius: 1px;
+    bottom: 100%;
+    margin-bottom: -3px;
+    width: 15px;
+    height: 10px;
     background: currentColor;
-    box-shadow: -4px 2px 0 currentColor, 4px 1px 0 currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 10'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M4 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M7.5 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M11 9c-.7-1.4 .7-2 0-3.4'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 10'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M4 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M7.5 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M11 9c-.7-1.4 .7-2 0-3.4'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
     opacity: 0;
 }
 
 .support-chip:hover .chip-ico::after {
-    animation: chip-steam 1000ms var(--ease) infinite;
+    animation: chip-steam 1800ms var(--ease) infinite;
 }
 
 @keyframes chip-steam {
     0% {
         opacity: 0;
-        transform: translate(-50%, 3px);
+        transform: translate(-50%, 3px) scaleY(0.7);
     }
 
-    35% {
-        opacity: 0.85;
+    30% {
+        opacity: 0.9;
     }
 
     100% {
         opacity: 0;
-        transform: translate(-50%, -7px);
+        transform: translate(-50%, -5px) scaleY(1.2);
     }
 }
 
