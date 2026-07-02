@@ -32,6 +32,8 @@ atualizado a cada nova contribuição mesclada.
 - **Emanoel** ([@emanoeI](https://github.com/emanoeI)) — atalho "ir ao vivo" restrito
   à aba ativa (via `chrome.tabs.sendMessage`) — **PR #16 (mesclada)**.
 - **Guilherme** ([@ventgui28](https://github.com/ventgui28)) — **Botão "Ir ao Vivo"** de ação rápida diretamente no popup da extensão — **PR #15 (mesclada)**.
+- **Cristian** ([@criszst](https://github.com/criszst)) — correção da alternância do
+  botão CTA "Apoiar via PIX", que agora abre **e** fecha o painel de doação — **PR #20 (mesclada)**.
 
 ## Ideias e relatos
 - **Habini86** ([@Habini86](https://github.com/Habini86)) — ideia do gerenciamento

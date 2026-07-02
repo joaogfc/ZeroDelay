@@ -7,6 +7,11 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Corrigido
+
+- Botão CTA **"Apoiar via PIX"** agora alterna o painel de doação (abre **e**
+  fecha), em vez de apenas abrir — mesmo comportamento do botão "Apoiar".
+
 ### Removido
 
 - **Botão "Ir ao Vivo"** do popup — destoava da interface. O atalho de teclado
