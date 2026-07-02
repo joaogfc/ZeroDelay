@@ -135,10 +135,10 @@ body {
     animation: rise 220ms var(--ease) both;
 }
 
-/* Pixel-dissolve scatter — real scattered square pixels (Bayer-dithered, drawn
- * per mode card by pixel-dissolve.js), sparse and subtle, hugging the left/right
- * edges and thinning inward. Waves in when the popup opens. Behind card content
- * (z-index -1 within the card's isolation), crisp blocks. */
+/* Pixel-dissolve scatter — sparse scattered square pixels (Bayer-dithered, drawn
+ * by pixel-dissolve.js) that grow inward from every edge ONLY on the active card,
+ * on selection. Behind card content (z-index -1 within the card's isolation),
+ * crisp blocks. Empty (cleared) on unselected cards. */
 .card-scatter {
     position: absolute;
     inset: 0;
@@ -148,7 +148,7 @@ body {
     pointer-events: none;
     image-rendering: pixelated;
     border-radius: inherit;
-    opacity: 0.5;
+    opacity: 0.45;
 }
 
 /* Signal texture: a faint CRT scanline over the whole popup while the engine is
@@ -231,7 +231,8 @@ body {
  * --o-x / --o-y if the disc drifts off the glyph. */
 .brand-name {
     --o-x: 3.5ch;
-    --o-y: 0.56em;
+    --o-y: 0.47em;
+    --o-size: 0.56em;
 }
 
 .brand-name::before,
@@ -240,8 +241,8 @@ body {
     position: absolute;
     left: var(--o-x);
     top: var(--o-y);
-    width: 0.66em;
-    height: 0.66em;
+    width: var(--o-size);
+    height: var(--o-size);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     opacity: 0;
@@ -1148,7 +1149,7 @@ body {
  * (via mask, so the border curves around the bite) — the classic ticket read
  * (à la the 荷包 / LÉONE refs). BR-only (intl links replace it). */
 .support-pix {
-    --tear: 66px;
+    --tear: 70px;
     /* distance of the perforation line from the coupon bottom */
     position: relative;
     display: flex;
@@ -1188,7 +1189,8 @@ body {
 }
 
 .support-scan {
-    margin: 0;
+    /* Extra room below so the text clears the perforation line under it. */
+    margin: 0 0 16px;
     font-size: 11.5px;
     color: var(--text-faint);
     text-align: center;
