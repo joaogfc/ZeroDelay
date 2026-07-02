@@ -7,6 +7,10 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Memória de modo por canal**: o ZeroDelay agora lembra o modo selecionado para cada canal do YouTube e reaplica a preferência ao retornar ao mesmo canal.
+
 ### Corrigido
 
 - Botão CTA **"Apoiar via PIX"** agora alterna o painel de doação (abre **e**
