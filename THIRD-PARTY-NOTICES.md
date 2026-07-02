@@ -99,7 +99,10 @@ license text travels with it in [`fonts/OFL.txt`](fonts/OFL.txt).
 The pixel glyphs stacked under each mode icon (the low-quality/degraded state of
 the "degraded → sharp" morph) are individual SVGs from **Pixelarticons** by
 **Gerrit Halfmann**, inlined in `popup.js` (`ICONS`). Only the glyphs actually
-used are vendored: `power`, `sparkle`, `shield`, `speed-medium`, `arrow-bar-right`, `zap`.
+used are vendored: `power`, `sparkle`, `shield`, `speed-medium`, `arrow-bar-right`,
+`zap`, `coffee`, `tea` (the last two label the PIX amount chips). The to-go cup and
+cappuccino glyphs used for the higher amounts are original pixel art drawn for this
+project (not from Pixelarticons) and carry no third-party claim.
 
 > https://github.com/halfmage/pixelarticons
 

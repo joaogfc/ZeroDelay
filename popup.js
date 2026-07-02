@@ -104,6 +104,17 @@ const ICONS = {
     bmc: solo('<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>'),
 };
 
+// Pixel-art coffee, one per PIX amount — "fancier the more you tip". `coffee`
+// and `tea` are Pixelarticons (MIT); the to-go cup and cappuccino are drawn here
+// on the same 24px grid. Decorative only — keyed by amount, no logic attached.
+const cup = d => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${d}</svg>`;
+const COFFEE = {
+    1: cup('<path d="M4 4h16v2H4zm0 2h2v8H4zm2 8h10v2H6zm14-8h2v4h-2zm-2 4h2v2h-2zm-2-4h2v8h-2zM2 18h18v2H2z"/>'),
+    3: cup('<path d="M4 6h16v2H4zm0 2h2v10H4zm2 10h10v2H6zM20 8h2v4h-2zm-2 4h2v2h-2zm-2-4h2v10h-2zM7 2h2v2H7zm6 0h2v2h-2zM9 0h2v2H9zm6 0h2v2h-2zm-5 8h2v4h-2zm-2 4h6v4H8z"/>'),
+    5: cup('<path d="M13 1h2v4h-2zM6 5h12v2H6zM7 7h2v11H7zm8 0h2v11h-2zM7 18h10v2H7z"/>'),
+    10: cup('<path d="M9 3h6v2H9zM7 5h10v2H7zm0 2h2v9H7zm8 0h2v9h-2zm-8 9h10v2H7zM4 18h14v2H4z"/>'),
+};
+
 // --------------------------------------------------------------- State
 let state = {};
 const updaters = [];          // fn() -> sync a control's display
@@ -312,7 +323,7 @@ function renderSupport() {
             const chip = el('button', {
                 class: 'support-chip', type: 'button', role: 'radio', 'aria-checked': 'false',
                 onclick: () => { amount = value; custom.hidden = true; selectChip(key); updatePix(); },
-            }, 'R$ ' + value);
+            }, el('span', { class: 'chip-ico', html: COFFEE[value] || '' }), el('span', { text: 'R$ ' + value }));
             chips[key] = chip;
             amountsBox.append(chip);
         }

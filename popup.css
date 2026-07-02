@@ -893,7 +893,11 @@ body {
 
 .support-chip {
     flex: 1 1 auto;
-    min-width: 54px;
+    min-width: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -906,6 +910,22 @@ body {
     cursor: pointer;
     font-variant-numeric: tabular-nums;
     transition: border-color 150ms var(--ease), background 150ms var(--ease), color 150ms var(--ease);
+}
+
+/* Coffee glyph inside each amount chip — grows fancier with the tip. */
+.chip-ico {
+    display: inline-flex;
+    flex: none;
+}
+
+.chip-ico svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+}
+
+.chip-ico:empty {
+    display: none;
 }
 
 .support-chip:hover {
