@@ -924,8 +924,9 @@ body {
 
 /* ---------------------------------------------------------------- Support CTA (always visible) */
 /* Speech balloon: reads as the lonely "Apoiar" button (top-right) talking, and
- * pops out of it on open. Solid warm surface (no alpha) so the tail is seamless;
- * the tail is a proper two-triangle notch (outer = border, inner = fill). */
+ * pops hard out of it on open, then nudges now and then for attention. The tail
+ * is a solid rotated square whose inner half merges into the balloon (same solid
+ * fill) — so it composes as one shape, not a floating triangle. */
 .support-cta {
     position: relative;
     display: flex;
@@ -937,44 +938,63 @@ body {
     background: var(--cta-bg);
     box-shadow: 3px 3px 0 0 var(--pop);
     transform-origin: top right;
-    animation: balloon-pop 460ms var(--spring) 320ms both;
+    animation:
+        balloon-pop 560ms var(--spring) 300ms both,
+        balloon-nudge 7s var(--ease) 2.6s infinite;
 }
 
-/* Tail — outer triangle carries the border colour... */
+/* Tail — a solid square rotated 45°; its lower half sits inside the balloon and,
+ * being the same fill, hides the seam. Only the two outer sides carry the border. */
 .support-cta::before {
     content: "";
     position: absolute;
-    top: -11px;
-    right: 40px;
-    border-left: 9px solid transparent;
-    border-right: 9px solid transparent;
-    border-bottom: 9px solid var(--warn);
-}
-
-/* ...inner triangle sits just below in the fill colour, hiding the seam. */
-.support-cta::after {
-    content: "";
-    position: absolute;
-    top: -7px;
-    right: 42px;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-bottom: 7px solid var(--cta-bg);
+    top: -8px;
+    right: 44px;
+    width: 15px;
+    height: 15px;
+    background: var(--cta-bg);
+    border-top: 2px solid var(--warn);
+    border-left: 2px solid var(--warn);
+    border-radius: 3px 0 0 0;
+    transform: rotate(45deg);
 }
 
 @keyframes balloon-pop {
     0% {
         opacity: 0;
-        transform: scale(0.8);
+        transform: scale(0.35) translateY(-8px);
     }
 
-    60% {
+    55% {
         opacity: 1;
-        transform: scale(1.04);
+        transform: scale(1.1) translateY(0);
+    }
+
+    72% {
+        transform: scale(0.96);
     }
 
     100% {
         transform: scale(1);
+    }
+}
+
+/* Periodic attention wiggle — quick rock around the tail, then still. */
+@keyframes balloon-nudge {
+    0%, 8%, 100% {
+        transform: rotate(0deg);
+    }
+
+    2% {
+        transform: rotate(-2.5deg);
+    }
+
+    4.5% {
+        transform: rotate(2.5deg);
+    }
+
+    6.5% {
+        transform: rotate(-1.2deg);
     }
 }
 
