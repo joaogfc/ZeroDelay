@@ -33,7 +33,7 @@ const CSS = `
    YouTube?" ambiguity — the badge keeps it attributed to ZeroDelay. */
 /* Player: the live DVR bar + scrubber go gold, buffered segment blue, live dot gold */
 html.${ROOT_CLASS} .ytp-play-progress,html.${ROOT_CLASS} .ytp-scrubber-button{background:#FFDF00!important;}
-html.${ROOT_CLASS} .ytp-load-progress{background:rgba(0,39,118,.55)!important;}
+html.${ROOT_CLASS} .ytp-load-progress{background:rgba(0,39,118,.9)!important;}
 html.${ROOT_CLASS} .ytp-live-badge::before{background:#FFDF00!important;}
 html.${ROOT_CLASS} .ytp-live-badge{color:#FFF6D5!important;}
 /* Masthead accent: a green underline + the CBF tricolor rule. The native masthead
@@ -42,9 +42,12 @@ html.${ROOT_CLASS} #masthead-container,html.${ROOT_CLASS} ytd-masthead{
   border-bottom:2px solid #009C3B!important;
 }
 html.${ROOT_CLASS} #masthead-container::after{
-  content:'';position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2100;
+  content:'';position:absolute;left:0;right:0;bottom:0;height:4px;z-index:2100;
   background:linear-gradient(90deg,#009C3B 0 33%,#FFDF00 33% 66%,#002776 66% 100%);
+  animation:zd-hexa-sync .6s ease both;
 }
+/* The tricolor "syncs" in on activation: wipes left to right, blur -> sharp. */
+@keyframes zd-hexa-sync{from{clip-path:inset(0 100% 0 0);filter:blur(3px);}to{clip-path:inset(0 0 0 0);filter:blur(0);}}
 
 /* ===== FULL THEME (opt-in sub-toggle .zd-hexa-full, OFF by default) =============
    The broad green repaint of the whole page (backgrounds, buttons, chips, chat).
@@ -95,8 +98,9 @@ html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-author-chip #author-name{color:#FF
 .zd-hexa-badge .zd-hexa-stars{color:#FFDF00;letter-spacing:1px;}
 .zd-hexa-badge--masthead{margin:0 10px;align-self:center;}
 .zd-hexa-gol{
-  position:absolute;left:14px;top:14px;z-index:60;cursor:pointer;border:0;
-  border-radius:999px;padding:7px 15px;background:linear-gradient(#FFDF00,#F5C400);
+  position:absolute;left:14px;top:14px;z-index:60;cursor:pointer;
+  border:2px solid #002776;border-radius:999px;padding:7px 15px;
+  background:linear-gradient(#FFDF00,#F5C400);
   color:#04140A;font:800 13px/1 Roboto,system-ui,sans-serif;letter-spacing:.5px;
   box-shadow:0 2px 8px rgba(0,0,0,.45);opacity:.9;animation:zd-hexa-pop .3s ease both;
 }
@@ -112,7 +116,28 @@ html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-author-chip #author-name{color:#FF
 .zd-hexa-confetti{position:fixed;inset:0;z-index:2147483645;pointer-events:none;overflow:hidden;}
 .zd-hexa-confetti i{position:absolute;top:-24px;width:8px;height:14px;border-radius:2px;animation:zd-hexa-fall linear forwards;}
 @keyframes zd-hexa-fall{to{transform:translateY(110vh) rotate(600deg);opacity:.85;}}
-@keyframes zd-hexa-pop{from{opacity:0;transform:scale(.85);}to{opacity:1;}}
+/* Nodes resolve from a degraded (blurred) state to sharp — the product's
+   degraded -> nitido signature, wearing the jersey. */
+@keyframes zd-hexa-pop{from{opacity:0;transform:scale(.9);filter:blur(4px);}to{opacity:1;filter:blur(0);}}
+
+/* Activation "boot": a full-screen tricolor that resolves from blurred + scanline
+   (degraded) to sharp, then clears — the page putting on the shirt in the same
+   pixel -> nitido gesture the extension uses on the stream. One-shot; removed by JS. */
+.zd-hexa-boot{
+  position:fixed;inset:0;z-index:2147483644;pointer-events:none;
+  background:linear-gradient(180deg,#009C3B 0 34%,#FFDF00 34% 67%,#002776 67% 100%);
+  animation:zd-hexa-boot .8s ease forwards;
+}
+.zd-hexa-boot::after{
+  content:'';position:absolute;inset:0;mix-blend-mode:multiply;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 2px,transparent 2px 5px);
+}
+@keyframes zd-hexa-boot{
+  0%{opacity:0;filter:blur(11px) saturate(1.6);transform:scale(1.06);}
+  22%{opacity:.92;}
+  55%{filter:blur(0) saturate(1);transform:scale(1);}
+  100%{opacity:0;filter:blur(0);transform:scale(1);}
+}
 
 /* Opt-in invite: shown (theme still OFF) when a live Brazil game is detected.
    Clearly ZeroDelay's (carries the badge), never posing as YouTube. */
@@ -146,11 +171,12 @@ html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-author-chip #author-name{color:#FF
   html.${ROOT_CLASS}.${FULL_CLASS},html.${ROOT_CLASS}.${FULL_CLASS} body,html.${ROOT_CLASS}.${FULL_CLASS} ytd-app,
   html.${ROOT_CLASS}.${FULL_CLASS} #masthead-container,html.${ROOT_CLASS}.${FULL_CLASS} ytd-masthead{transition:none!important;}
   .zd-hexa-badge,.zd-hexa-gol,.zd-hexa-toast{animation:none!important;}
+  html.${ROOT_CLASS} #masthead-container::after{animation:none!important;}
   .zd-hexa-invite{transition:none!important;opacity:1!important;transform:translateX(-50%)!important;}
-  .zd-hexa-gol,.zd-hexa-confetti{display:none!important;} /* no confetti -> hide its trigger */
+  .zd-hexa-gol,.zd-hexa-confetti,.zd-hexa-boot{display:none!important;} /* no confetti/boot -> hide trigger */
 }
 @media (forced-colors: active){
-  html.${ROOT_CLASS} #masthead-container::after,.zd-hexa-confetti{display:none!important;}
+  html.${ROOT_CLASS} #masthead-container::after,.zd-hexa-confetti,.zd-hexa-boot{display:none!important;}
 }
 `;
 
@@ -187,6 +213,7 @@ export function setActive(on, activatedLabel) {
     document.documentElement.classList.toggle(ROOT_CLASS, on);
     if (on) {
         hideInvite();
+        playBoot();
         ensureNodes();
         keepAlive = setInterval(ensureNodes, 1000);
         showToast(activatedLabel);
@@ -312,6 +339,15 @@ function fireConfetti() {
     }
     document.body.appendChild(layer);
     setTimeout(() => layer.remove(), 3200);
+}
+
+// One-shot "boot" flash on activation: a tricolor that resolves blur -> sharp,
+// then clears (the page putting on the jersey). Skipped under reduced motion.
+function playBoot() {
+    if (reduceMotion()) return;
+    const b = make('div', 'zd-hexa-boot');
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 850);
 }
 
 function showToast(text) {
