@@ -46,20 +46,31 @@ function main(common) {
         if (area === 'local' && common.storage.some(k => k in changes)) loadSettings();
     }
 
-    // Forward the "jump to live" storage signal to the engine. Any change to the
-    // nonce means "seek to live now"; the value itself is irrelevant.
+    /** Tell the engine (inject.js) to jump to the live edge now. */
+    function dispatchGoLive() {
+        document.dispatchEvent(new CustomEvent('_live_catch_up_go_live'));
+    }
+
+    // Legacy/global signal: still forwarded for compatibility, but the "go-live"
+    // shortcut no longer writes it (see background.js) — every tab reacting to
+    // this key is exactly the behavior that shortcut was moved away from (PR #16).
     function onGoLiveSignalChanged(changes, area) {
-        if (area === 'local' && changes[common.goLiveSignalKey]) {
-            document.dispatchEvent(new CustomEvent('_live_catch_up_go_live'));
-        }
+        if (area === 'local' && changes[common.goLiveSignalKey]) dispatchGoLive();
+    }
+
+    // Active-tab-only path: background.js sends this directly to the tab the
+    // "go-live" shortcut was pressed on (PR #16).
+    function onRuntimeMessage(msg) {
+        if (msg?.type === 'go-live') dispatchGoLive();
     }
 
     // Guard against double-registration if the content script re-inits in the
-    // same page — storage listeners would otherwise stack up (PR #17).
+    // same page — listeners would otherwise stack up (PR #17).
     if (!storageListenersAttached) {
         storageListenersAttached = true;
         chrome.storage.onChanged.addListener(onEngineSettingsChanged);
         chrome.storage.onChanged.addListener(onGoLiveSignalChanged);
+        chrome.runtime.onMessage.addListener(onRuntimeMessage);
     }
 
     document.addEventListener('_live_catch_up_init', () => {

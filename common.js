@@ -134,7 +134,15 @@ export function ensureInstalledAt() {
 // of `donateKeys` ("Restore defaults" leaves them untouched).
 // ---------------------------------------------------------------------------
 
-/** One-shot "jump to live" nonce; content.js forwards it to the engine. Global by design: every open YouTube tab jumps to live. */
+/**
+ * One-shot "jump to live" nonce; content.js forwards it to the engine.
+ * Legacy/global signal: every open YouTube tab reacts to it, since
+ * `chrome.storage.local` has no per-tab scoping. The "go-live" keyboard
+ * shortcut no longer writes this key — it targets the active tab directly via
+ * `chrome.tabs.sendMessage` (see background.js). Kept for any other caller
+ * that still needs an all-tabs signal; do not use it for anything meant to
+ * affect only the active tab.
+ */
 export const goLiveSignalKey = 'goLiveSignal';
 /** Mode to restore when the toggle shortcut re-enables playback after Off. */
 export const lastModeKey = 'lastMode';
