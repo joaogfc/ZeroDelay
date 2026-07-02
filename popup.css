@@ -873,7 +873,7 @@ body {
     min-width: 54px;
     padding: 8px 10px;
     border: 1px solid var(--border);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--surface-2);
     color: var(--text);
     font-family: var(--font-mono);
@@ -912,11 +912,39 @@ body {
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+/* PIX area styled as a tear-off coupon: dashed perforation + punched side
+ * notches. The notch circles are painted in the panel colour so they read as
+ * cut-outs. Only shown for Brazil (the intl links replace it elsewhere). */
 .support-pix {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    padding: 14px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+}
+
+.support-pix::before,
+.support-pix::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+    transform: translateY(-50%);
+}
+
+.support-pix::before {
+    left: -8px;
+}
+
+.support-pix::after {
+    right: -8px;
 }
 
 .support-qr {
