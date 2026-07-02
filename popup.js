@@ -104,16 +104,21 @@ const ICONS = {
     bmc: solo('<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>'),
 };
 
-// Pixel-art coffee, one per PIX amount — "fancier the more you tip". `coffee`
-// and `tea` are Pixelarticons (MIT); the to-go cup and cappuccino are drawn here
-// on the same 24px grid. Decorative only — keyed by amount, no logic attached.
-const cup = d => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${d}</svg>`;
-const COFFEE = {
-    1: cup('<path d="M4 4h16v2H4zm0 2h2v8H4zm2 8h10v2H6zm14-8h2v4h-2zm-2 4h2v2h-2zm-2-4h2v8h-2zM2 18h18v2H2z"/>'),
-    3: cup('<path d="M4 6h16v2H4zm0 2h2v10H4zm2 10h10v2H6zM20 8h2v4h-2zm-2 4h2v2h-2zm-2-4h2v10h-2zM7 2h2v2H7zm6 0h2v2h-2zM9 0h2v2H9zm6 0h2v2h-2zm-5 8h2v4h-2zm-2 4h6v4H8z"/>'),
-    5: cup('<path d="M7 3h10v2H7zM5 5h14v2H5zM6 7h2v10H6zm10 0h2v10h-2zM8 17h8v2H8zM6 10h12v4H6z"/>'),
-    10: cup('<path d="M8 3h8v2H8zM6 5h12v2H6zM6 7h2v8H6zm9 0h2v8h-2zm-9 8h11v2H6zM17 9h3v2h-3zm2 2h1v2h-1zm-2 2h3v2h-3zM4 18h14v2H4zM15 0h2v2h-2zM14 2h2v2h-2zM13 4h2v3h-2z"/>'),
+// Drink glyph per PIX amount (BR-only, shown in the PIX flow) — "fancier the more
+// you tip": copo americano → lata → long neck → caneca. Line style, to match the
+// Lucide beer mug in the header. The mug (R$10) is Lucide "beer" (ISC); the glass,
+// can and bottle are original line icons drawn for this project.
+const drink = paths => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+const BEER = {
+    1: drink('<path d="M7 6h10l-1.3 13.2a1 1 0 0 1-1 .8H9.3a1 1 0 0 1-1-.8z"/><path d="M7.6 10h8.8"/>'),
+    3: drink('<path d="M7 5v14"/><path d="M17 5v14"/><ellipse cx="12" cy="5" rx="5" ry="1.6"/><path d="M7 19a5 1.6 0 0 0 10 0"/><path d="M10.5 3.6h3"/>'),
+    5: drink('<path d="M10 2h4v3.8a3 3 0 0 0 .44 1.57l.62 1A3 3 0 0 1 16 9.95V20a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9.95a3 3 0 0 1 .94-2.18l.62-1A3 3 0 0 0 10 5.8z"/><path d="M8 15h8"/>'),
+    10: drink('<path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/>'),
 };
+
+// Beer-mug outline for the header support toggle, swapped in for BR (matches the
+// coffee-toggle's stroke style). Lucide "beer" (ISC).
+const BEER_TOGGLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></svg>';
 
 // --------------------------------------------------------------- State
 let state = {};
@@ -276,6 +281,9 @@ function renderSupport() {
 
     if (isBr) {
         // ----- PIX (Brazil): suggested amounts + "copia e cola" code + QR ----
+        // Brazil's whole donation theme is beer 🍺 — swap the header cup for a mug.
+        const headerIcon = toggle.querySelector('svg');
+        if (headerIcon) headerIcon.replaceWith(parseSvg(BEER_TOGGLE));
         let amount = pix.PIX_DEFAULT_AMOUNT;
         const chips = {};
         const chipEls = [];   // ordered, for the radiogroup keyboard wiring
@@ -320,14 +328,14 @@ function renderSupport() {
             const chip = el('button', {
                 class: 'support-chip', type: 'button', role: 'radio', 'aria-checked': 'false',
                 onclick: () => { amount = value; custom.hidden = true; selectChip(key); updatePix(); },
-            }, el('span', { class: 'chip-ico', html: COFFEE[value] || '' }), el('span', { text: 'R$ ' + value }));
+            }, el('span', { class: 'chip-ico', html: BEER[value] || '' }), el('span', { text: 'R$ ' + value }));
             chips[key] = chip;
             chipEls.push(chip);
             amountsBox.append(chip);
         }
 
         chips.custom = el('button', {
-            class: 'support-chip', type: 'button', role: 'radio', 'aria-checked': 'false',
+            class: 'support-chip support-chip--custom', type: 'button', role: 'radio', 'aria-checked': 'false',
             onclick: () => {
                 custom.hidden = false;
                 custom.focus();

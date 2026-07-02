@@ -65,9 +65,9 @@ export const label = {
     reset: msg('reset', 'Restaurar padrões'),
     resetHint: msg('resetHint', 'Segure por 1 segundo para restaurar.'),
 
-    // Support / coffee
-    supportTitle: msg('supportTitle', 'Me pague um café'),
-    supportNote: msg('supportNote', 'Curtiu a extensão? Me ajude com um cafezinho via PIX.'),
+    // Support / beer (BR) — café/coffee stays in the non-pt locales
+    supportTitle: msg('supportTitle', 'Me pague uma cerveja'),
+    supportNote: msg('supportNote', 'Curtiu a extensão? Me ajude com uma cervejinha via PIX.'),
     supportCustom: msg('supportCustom', 'Outro'),
     supportCustomPlaceholder: msg('supportCustomPlaceholder', 'Valor em R$'),
     supportScan: msg('supportScan', 'Aponte a câmera do app do seu banco, ou copie o código:'),
@@ -78,10 +78,10 @@ export const label = {
     supportBmc: msg('supportBmc', 'Buy me a coffee'),
 
     // Donation nudge (gentle, optional)
-    donateNudge: msg('donateNudge', 'Curtindo o ZeroDelay? Se ele te ajuda, considere apoiar com um café — é totalmente opcional. 🙂'),
+    donateNudge: msg('donateNudge', 'Curtindo o ZeroDelay? Se ele te ajuda, considere apoiar com uma cerveja — é totalmente opcional. 🙂'),
     donateLater: msg('donateLater', 'Lembrar depois'),
     donateOptOut: msg('donateOptOut', 'Não mostrar novamente'),
-    donateBannerText: msg('donateBannerText', 'Curtindo o ZeroDelay? Apoie com um café.'),
+    donateBannerText: msg('donateBannerText', 'Curtindo o ZeroDelay? Apoie com uma cerveja. 🍺'),
     donateBannerCta: msg('donateBannerCta', 'Apoiar'),
     donateBannerClose: msg('donateBannerClose', 'Fechar'),
 
@@ -92,7 +92,7 @@ export const label = {
 
     // Support — always-visible CTA
     supportBtn: msg('supportBtn', 'Apoiar'),
-    supportCtaText: msg('supportCtaText', 'Curtindo? Me ajuda com um cafezinho 🙏'),
+    supportCtaText: msg('supportCtaText', 'Curtindo? Me paga uma cervejinha 🍺'),
     supportCtaBtn: msg('supportCtaBtn', 'Apoiar via PIX'),
 
     // Player-indicator accessibility labels

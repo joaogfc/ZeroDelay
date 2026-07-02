@@ -105,10 +105,10 @@
       "message": "Segure por 1 segundo para restaurar."
    },
    "supportTitle": {
-      "message": "Me pague um café"
+      "message": "Me pague uma cerveja"
    },
    "supportNote": {
-      "message": "Curtiu a extensão? Me ajude com um cafezinho via PIX."
+      "message": "Curtiu a extensão? Me ajude com uma cervejinha via PIX."
    },
    "supportCustom": {
       "message": "Outro"
@@ -129,7 +129,7 @@
       "message": "Buy me a coffee"
    },
    "donateNudge": {
-      "message": "Curtindo o ZeroDelay? Se ele te ajuda, considere apoiar com um café — é totalmente opcional. 🙂"
+      "message": "Curtindo o ZeroDelay? Se ele te ajuda, considere apoiar com uma cerveja — é totalmente opcional. 🙂"
    },
    "donateLater": {
       "message": "Lembrar depois"
@@ -138,7 +138,7 @@
       "message": "Não mostrar novamente"
    },
    "donateBannerText": {
-      "message": "Curtindo o ZeroDelay? Apoie com um café."
+      "message": "Curtindo o ZeroDelay? Apoie com uma cerveja. 🍺"
    },
    "donateBannerCta": {
       "message": "Apoiar"
@@ -159,7 +159,7 @@
       "message": "Apoiar"
    },
    "supportCtaText": {
-      "message": "Curtindo? Me ajuda com um cafezinho 🙏"
+      "message": "Curtindo? Me paga uma cervejinha 🍺"
    },
    "supportCtaBtn": {
       "message": "Apoiar via PIX"

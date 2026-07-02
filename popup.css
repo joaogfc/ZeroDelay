@@ -1019,16 +1019,19 @@ html {
 }
 
 .support-amounts {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
+}
+
+/* "Outro" (custom amount) gets its own full-width row under the four drinks. */
+.support-chip--custom {
+    grid-column: 1 / -1;
 }
 
 /* Amount chips as chunky sticker tiles — coffee glyph stacked over the value,
  * squarer and bigger, and they pop off a shadow (red when selected/live). */
 .support-chip {
-    flex: 1 1 84px;
-    min-width: 84px;
     display: inline-flex;
     flex-direction: column;
     align-items: center;
@@ -1064,43 +1067,6 @@ html {
 
 .chip-ico:empty {
     display: none;
-}
-
-/* Wispy steam that rises off the cup while the chip is hovered — same curvy,
- * smooth feel as the Apoiar button (a masked SVG filled with the chip's colour,
- * eased, not stepped). */
-.chip-ico::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: 100%;
-    margin-bottom: -3px;
-    width: 15px;
-    height: 10px;
-    background: currentColor;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 10'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M4 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M7.5 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M11 9c-.7-1.4 .7-2 0-3.4'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 10'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M4 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M7.5 9c-.7-1.4 .7-2 0-3.4'/%3E%3Cpath d='M11 9c-.7-1.4 .7-2 0-3.4'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain;
-    opacity: 0;
-}
-
-.support-chip:hover .chip-ico::after {
-    animation: chip-steam 1800ms var(--ease) infinite;
-}
-
-@keyframes chip-steam {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, 3px) scaleY(0.7);
-    }
-
-    30% {
-        opacity: 0.9;
-    }
-
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -5px) scaleY(1.2);
-    }
 }
 
 .support-chip:hover {

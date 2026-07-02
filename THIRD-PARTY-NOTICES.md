@@ -100,9 +100,9 @@ The pixel glyphs stacked under each mode icon (the low-quality/degraded state of
 the "degraded → sharp" morph) are individual SVGs from **Pixelarticons** by
 **Gerrit Halfmann**, inlined in `popup.js` (`ICONS`). Only the glyphs actually
 used are vendored: `power`, `sparkle`, `shield`, `speed-medium`, `arrow-bar-right`,
-`zap`, `coffee`, `tea` (the last two label the PIX amount chips). The to-go cup and
-cappuccino glyphs used for the higher amounts are original pixel art drawn for this
-project (not from Pixelarticons) and carry no third-party claim.
+`zap` (mode icons). The copo americano, can and long-neck bottle glyphs labeling the
+PIX amount chips (Brazil only) are original line icons drawn for this project (not
+from Pixelarticons) and carry no third-party claim; the mug there is Lucide `beer`.
 
 > https://github.com/halfmage/pixelarticons
 
@@ -138,7 +138,7 @@ The clean vector glyphs (the sharp/synced state of the morph, plus the single
 support/indicator icons) are individual SVGs from **Lucide**, inlined in
 `popup.js` (`ICONS`). Only the glyphs actually used are vendored: `power`,
 `sparkles`, `shield`, `gauge`, `arrow-right-to-line`, `zap`, `check`, `wifi`,
-`sliders-horizontal`, `coffee`.
+`sliders-horizontal`, `coffee`, `beer`.
 
 > https://github.com/lucide-icons/lucide
 
