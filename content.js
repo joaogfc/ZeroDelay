@@ -2,7 +2,11 @@
 // Author: João Gustavo França <joao@solitus.com.br> (https://github.com/joaogfc)
 
 import(chrome.runtime.getURL('common.js')).then(common => {
-    if (!common.isLiveChat(location.href)) {
+    if (common.isLiveChat(location.href)) {
+        // Live-chat iframe (same youtube.com origin, so this script loads here too):
+        // watch chat volume to detect a Brazil goal and tell the top frame.
+        if (window.top !== window) initHexaChatGoalWatch(common);
+    } else {
         main(common);
         if (window.top === window) {
             initDonation(common);
@@ -283,7 +287,7 @@ async function initHexa(common) {
     let override = null;     // null = auto (detect+offer, never auto-apply); true/false = forced
     let applied = false;     // current theme on/off state
     let suggest = true;      // preference: offer the opt-in invite on Brazil games
-    let full = false;        // preference: full-theme repaint (default off)
+    let full = true;         // preference: full-theme repaint (default on)
     let invitedVideo = null; // video_id already offered (invite shows once per video)
 
     const autoActive = () => meta.isLive && common.detectBrazilMatch(meta.title);
@@ -339,12 +343,20 @@ async function initHexa(common) {
         }
     });
 
+    // GOAL! The live-chat watcher (running in the chat iframe, same origin) posts
+    // a message up when it detects a Brazil-goal spike. Fire confetti — but ONLY
+    // while the theme is actually on, so nothing happens for users who declined.
+    window.addEventListener('message', e => {
+        if (e.origin !== 'https://www.youtube.com') return;
+        if (e.data && e.data.__zdHexa === 'goal' && applied && hexa) hexa.celebrateGoal();
+    });
+
     // Preferences (popup toggles write these): whether to offer the invite, and
     // whether the full-theme repaint is on.
     if (extensionAlive()) {
         chrome.storage.local.get([common.hexaSuggestKey, common.hexaFullKey], d => {
             suggest = d[common.hexaSuggestKey] !== false; // default on
-            full = d[common.hexaFullKey] === true;        // default off
+            full = d[common.hexaFullKey] !== false;       // default on
             reevaluate();
         });
     }
@@ -355,7 +367,7 @@ async function initHexa(common) {
             reevaluate();
         }
         if (changes[common.hexaFullKey]) {
-            full = changes[common.hexaFullKey].newValue === true;
+            full = changes[common.hexaFullKey].newValue !== false;
             if (hexa && applied) hexa.setFull(full);
         }
     });
@@ -367,4 +379,81 @@ async function initHexa(common) {
     }
     hexa.install();  // insert the dormant <style> once
     reevaluate();    // apply whatever meta arrived while the module was loading
+}
+
+// --------------------------------------------------- MODO HEXA — goal detector
+// Runs INSIDE the live-chat iframe. A real goal makes the whole audience post at
+// once, so we watch for a short-window VOLUME SPIKE — a high absolute count AND a
+// big multiple of the recent baseline (a lone troll spamming "GOL" is neither) —
+// and require the burst to LEAN celebratory (common.classifyHexaChatMessage) so an
+// opponent goal (mostly groans) doesn't fire it. On a hit we postMessage the top
+// frame, which owns the theme and only celebrates while Modo Hexa is actually on.
+function initHexaChatGoalWatch(common) {
+    const SPIKE_WINDOW = 3000;      // ms — the "short space of time"
+    const BASELINE_WINDOW = 30000;  // ms — trailing window for the normal rate
+    const BURST_MIN = 18;           // absolute floor: msgs needed in the spike window
+    const SPIKE_MULT = 3.5;         // ...and this many times the baseline rate
+    const POS_MIN = 5;              // ...and at least this many clearly-celebratory msgs
+    const POS_RATIO = 2.0;          // ...celebration must outweigh dismay by this factor
+    const COOLDOWN = 45000;         // ms — no re-trigger right after a goal
+    const EVAL_EVERY = 500;         // ms — throttle the spike check
+    const MAX_EVENTS = 4000;        // safety cap on the buffer during a flood
+
+    let events = [];                // {t, score} per message, pruned to BASELINE_WINDOW
+    let lastEval = 0;
+    let cooldownUntil = 0;
+    let observer = null;
+    let observed = null;
+
+    function record(node) {
+        if (!node || node.nodeType !== 1 || !node.tagName) return;
+        if (!node.tagName.startsWith('YT-LIVE-CHAT-') || !/MESSAGE|PAID|MEMBERSHIP/.test(node.tagName)) return;
+        const body = node.querySelector('#message');
+        const text = (body ? body.textContent : node.textContent) || '';
+        events.push({ t: Date.now(), score: common.classifyHexaChatMessage(text) });
+        if (events.length > MAX_EVENTS) events.splice(0, events.length - MAX_EVENTS);
+    }
+
+    function evaluate() {
+        const now = Date.now();
+        if (now - lastEval < EVAL_EVERY) return;
+        lastEval = now;
+        const cutoff = now - BASELINE_WINDOW;
+        if (events.length && events[0].t < cutoff) events = events.filter(e => e.t >= cutoff);
+        if (now < cooldownUntil || !events.length) return;
+
+        const winStart = now - SPIKE_WINDOW;
+        let count = 0, pos = 0, neg = 0;
+        for (let i = events.length - 1; i >= 0 && events[i].t >= winStart; i--) {
+            count++;
+            if (events[i].score > 0) pos++;
+            else if (events[i].score < 0) neg++;
+        }
+        const baselineRate = events.length / (BASELINE_WINDOW / 1000);   // msgs/sec
+        const expected = baselineRate * (SPIKE_WINDOW / 1000);            // expected in the window
+        const isSpike = count >= BURST_MIN && count >= expected * SPIKE_MULT;
+        const isBrazilGoal = pos >= POS_MIN && pos >= neg * POS_RATIO;
+        if (isSpike && isBrazilGoal) {
+            cooldownUntil = now + COOLDOWN;
+            try { window.parent.postMessage({ __zdHexa: 'goal' }, 'https://www.youtube.com'); } catch { /* frame gone */ }
+        }
+    }
+
+    function attach() {
+        const host = document.querySelector('#items.yt-live-chat-item-list-renderer')
+            || document.querySelector('#items');
+        if (!host || (observed === host && observer)) return; // nothing yet, or already on it
+        if (observer) observer.disconnect();
+        observed = host;
+        observer = new MutationObserver(muts => {
+            for (const m of muts) for (const n of m.addedNodes) record(n);
+            evaluate();
+        });
+        observer.observe(host, { childList: true });
+    }
+
+    attach();
+    // Chat re-inits on some navigations — re-find the list, and evaluate on a timer
+    // too so a spike that ends between mutations still resolves.
+    setInterval(() => { attach(); evaluate(); }, 2000);
 }

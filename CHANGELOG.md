@@ -7,6 +7,39 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Modo Hexa — logo do YouTube vira bandeira do Brasil**: o símbolo do "play"
+  na masthead se transforma, em **loop com descanso** (~24s: a maior parte do
+  tempo como bandeira, um breve retorno ao YouTube), numa **bandeira cartoon
+  tremulando** — o campo vermelho vira verde, o **losango**, o **círculo azul** e
+  as **6 estrelas do hexa** brotam em coroa por cima, e o **triângulo branco do
+  play** permanece como elo entre os dois estados. Some no **gol** (a bandeira
+  balança forte junto com a confete) e respeita `prefers-reduced-motion` (fica uma
+  bandeira parada) e a tela cheia. Não é um adesivo por cima: é uma **troca no
+  próprio SVG da logo** — escondemos só os paths do ícone e injetamos a bandeira no
+  lugar exato dele, **reaproveitando o wordmark "YouTube" original** da página (nada
+  é reproduzido/embutido; tudo fica no mesmo sistema de coordenadas e alinhado).
+- **Modo Hexa — comemoração de GOL**: confete liberado **continuamente por ~3s**
+  (não mais um único estouro). Dispara pelo botão **GOL!** e também
+  **automaticamente** quando um **pico de volume no chat ao vivo** é detectado —
+  um gol de verdade faz a torcida inteira postar de uma vez. Salvaguardas contra
+  falso-positivo: exige um número alto de mensagens num intervalo curto **e** um
+  múltiplo grande do ritmo normal do chat (um troll isolado mandando "GOL" não
+  dispara), **e** que a rajada seja majoritariamente comemorativa
+  (`classifyHexaChatMessage`) — para **não comemorar gol do adversário** (lamento
+  no chat não conta). Cooldown de 45s entre disparos.
+
+### Alterado
+
+- **Modo Hexa**: restauradas características do tema original — o **tema verde
+  completo do YouTube** volta a vir **ligado por padrão** (ainda desligável em
+  "Tema completo no YouTube"), a **borda verde** sob o masthead e o **selo LIVE
+  dourado** no player.
+- **Modo Hexa fica totalmente inerte em tela cheia**: nenhum overlay (badge,
+  varal, GOL!, confete, boot, toast, convite) e nenhum acento no player (barra,
+  selo) enquanto o vídeo está em fullscreen — tudo volta ao sair.
+
 ### Corrigido
 
 - **Aceleração linear e contínua** no motor de catch-up. O controlador voltou a

@@ -186,7 +186,7 @@ export const lastModeKey = 'lastMode';
  */
 export const hexaSuggestKey = 'hexaSuggest';
 
-/** MODO HEXA — optional "full theme" (broad page repaint). Default off. */
+/** MODO HEXA — the "full theme" (broad green page repaint). Default ON. */
 export const hexaFullKey = 'hexaFull';
 
 /**
@@ -436,4 +436,30 @@ export function detectBrazilMatch(title) {
     const before = new RegExp(`\\b${TEAM}\\s+${SEP}\\.?\\s`);         // BRASIL X ... / BRASIL VS. ... / BRASIL E ...
     const after = new RegExp(`(?:^|\\s)${SEP}\\.?\\s+${TEAM}\\b`);    // ... X BRASIL
     return before.test(segment) || after.test(segment);
+}
+
+/**
+ * MODO HEXA — lean of ONE live-chat message: +1 celebration, -1 dismay, 0 neutral.
+ * Used (aggregated, and only alongside a volume SPIKE — see content.js) to tell a
+ * Brazil goal from an opponent goal without celebrating the wrong one. A lone
+ * troll typing "GOL" is one +1 among a calm chat — it never reaches the spike.
+ *
+ * Strong "GOL"/patriotic signals win over dismay words (a real Brazil goal floods
+ * chat with GOOOL even amid "não acredito!"); pure lament (no GOL) reads as -1, so
+ * an opponent goal — mostly groans — fails the aggregate celebration gate.
+ * @param {string} text - the chat message body.
+ * @returns {-1|0|1}
+ */
+export function classifyHexaChatMessage(text) {
+    if (typeof text !== 'string' || !text) return 0;
+    const t = text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const STRONG_POS = /go+l+|gola[cz]o|\bhexa\b|campe[ao]/;             // gol, goool, golaço, hexa, campeão
+    const POS_EMOJI = /🇧🇷|⚽|🥅|🎉|🥳|💚|💛|🟢|🟡|🔥/;
+    if (STRONG_POS.test(t) || POS_EMOJI.test(text)) return 1;
+    const NEG_WORD = /\b(nao|vish|eita|tomamos|tomou|levamos|levou|caiu|vergonha|frango|furada|pentelho)\b/;
+    const NEG_EMOJI = /😭|😡|🤬|💔|😤|👎/;
+    if (NEG_WORD.test(t) || NEG_EMOJI.test(text)) return -1;
+    const SOFT_POS = /\bvamo|\bbra[sz]il\b|\bisso\b|\beeh+\b|\buhu+\b/;
+    if (SOFT_POS.test(t)) return 1;
+    return 0;
 }

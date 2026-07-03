@@ -141,3 +141,28 @@ test('detectBrazilMatch ignores non-Brazil and non-matchup titles', () => {
     assert.equal(common.detectBrazilMatch(undefined), false);
     assert.equal(common.detectBrazilMatch(null), false);
 });
+
+test('classifyHexaChatMessage scores celebration as +1', () => {
+    assert.equal(common.classifyHexaChatMessage('GOL'), 1);
+    assert.equal(common.classifyHexaChatMessage('GOOOOOLLLL'), 1);       // stretched
+    assert.equal(common.classifyHexaChatMessage('golaço do brasil!'), 1); // accented
+    assert.equal(common.classifyHexaChatMessage('É CAMPEÃO'), 1);
+    assert.equal(common.classifyHexaChatMessage('vamo brasil 🇧🇷'), 1);
+    assert.equal(common.classifyHexaChatMessage('⚽⚽⚽'), 1);            // emoji only
+    // A strong GOL wins even when a dismay word is present (disbelief, not a loss).
+    assert.equal(common.classifyHexaChatMessage('GOOOL não acredito!!'), 1);
+});
+
+test('classifyHexaChatMessage scores pure dismay as -1 (opponent-goal guard)', () => {
+    assert.equal(common.classifyHexaChatMessage('não acredito nisso'), -1);
+    assert.equal(common.classifyHexaChatMessage('tomamos de novo'), -1);
+    assert.equal(common.classifyHexaChatMessage('que vergonha'), -1);
+    assert.equal(common.classifyHexaChatMessage('😭😭😭'), -1);
+});
+
+test('classifyHexaChatMessage is neutral (0) for off-topic and empty text', () => {
+    assert.equal(common.classifyHexaChatMessage('alguém sabe o placar?'), 0);
+    assert.equal(common.classifyHexaChatMessage('primeira vez aqui'), 0);
+    assert.equal(common.classifyHexaChatMessage(''), 0);
+    assert.equal(common.classifyHexaChatMessage(undefined), 0);
+});

@@ -23,6 +23,11 @@ const ROOT_CLASS = 'zd-hexa';
 // OFF by default — the base theme stays narrow (player + masthead accent + the
 // branded nodes) to avoid noise and impersonating YouTube.
 const FULL_CLASS = 'zd-hexa-full';
+// In FULLSCREEN the theme goes fully inert — no overlays, no player recolor. A
+// class toggled on <html> by the fullscreenchange listener (see install()) drives
+// it: the decorative nodes are hidden and the player-accent rules are gated with
+// :not(.zd-hexa-fs), so YouTube's native styling shows through.
+const FS_CLASS = 'zd-hexa-fs';
 // Overshoot spring, same feel as the extension's popup (--spring).
 const SPRING = 'cubic-bezier(.2,.9,.25,1.18)';
 
@@ -34,17 +39,18 @@ const CSS = `
    does not recolor YouTube's chrome. Less noise, and no "is this the real
    YouTube?" ambiguity — the badge keeps it attributed to ZeroDelay. */
 /* Progress bar: a slow tricolor gradient that shimmers along, so it reads as the
-   selecao's colors flowing, not a flat yellow "ad" bar. The LIVE badge is left
-   untouched on purpose — its red = "you're at the live edge", which is exactly
-   what the extension delivers; tinting it yellow would fight the whole product. */
-html.${ROOT_CLASS} .ytp-play-progress{
+   selecao's colors flowing, not a flat yellow "ad" bar. */
+html.${ROOT_CLASS}:not(.${FS_CLASS}) .ytp-play-progress{
   background-image:linear-gradient(90deg,#00A63F,#FFE14D,#2f7bff,#FFE14D,#00A63F)!important;
   background-size:300% 100%!important;
   animation:zd-hexa-bar 5s linear infinite!important;
 }
-html.${ROOT_CLASS} .ytp-scrubber-button{background:#FFE14D!important;box-shadow:0 0 0 2px rgba(0,39,118,.5)!important;}
-html.${ROOT_CLASS} .ytp-load-progress{background:rgba(0,39,118,.85)!important;}
+html.${ROOT_CLASS}:not(.${FS_CLASS}) .ytp-scrubber-button{background:#FFE14D!important;box-shadow:0 0 0 2px rgba(0,39,118,.5)!important;}
+html.${ROOT_CLASS}:not(.${FS_CLASS}) .ytp-load-progress{background:rgba(0,39,118,.85)!important;}
 @keyframes zd-hexa-bar{from{background-position:0 0;}to{background-position:300% 0;}}
+/* LIVE badge tinted to the flag (restored): gold dot + ivory text. */
+html.${ROOT_CLASS}:not(.${FS_CLASS}) .ytp-live-badge::before{background:#FFDF00!important;}
+html.${ROOT_CLASS}:not(.${FS_CLASS}) .ytp-live-badge{color:#FFF6D5!important;}
 /* Masthead accent = the bunting garland below (no coloured border line, which
    clashed with the flags' own string). */
 /* Bunting garland (varal de bandeirinhas) hanging from the masthead — the flags
@@ -56,11 +62,43 @@ html.${ROOT_CLASS} .ytp-load-progress{background:rgba(0,39,118,.85)!important;}
 }
 @keyframes zd-hexa-drop{from{transform:translateY(-22px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 
+/* Animated logo: the YouTube play-button becomes a waving Brazil flag that grows
+   the 6 hexa stars, holds a while, morphs back to the red icon, and loops — a slow
+   "loop com descanso" (~24s: mostly flag, a brief YouTube beat). It is a COMPLETE
+   logo swap, NOT an overlay: ensureLogoFlag() hides the icon paths of YouTube's own
+   logo <svg viewBox="0 0 93 20"> and injects this flag as a nested <svg> in the
+   icon's exact slot (x 0..29). YouTube's real "YouTube" wordmark is reused as-is, so
+   everything lines up in one coordinate space and there is nothing to align. The
+   white play triangle is the shared anchor between both states. */
+.zd-hexa-lg-flag{overflow:visible;transform-origin:left center;animation:zd-hexa-lg-wave 24s ease-in-out infinite;}
+.zd-hexa-lg-skin{animation:zd-hexa-lg-skin 24s ease infinite;}
+.zd-hexa-lg-gloss{animation:zd-hexa-lg-gloss 24s ease infinite;}
+.zd-hexa-lg-dia{transform-box:fill-box;transform-origin:center;animation:zd-hexa-lg-diaA 24s cubic-bezier(.3,1.3,.5,1) infinite;}
+.zd-hexa-lg-circ{transform-box:fill-box;transform-origin:center;animation:zd-hexa-lg-diaB 24s cubic-bezier(.3,1.3,.5,1) infinite;}
+.zd-hexa-lg-glint{animation:zd-hexa-lg-glint 24s ease-in-out infinite;}
+.zd-hexa-lg-star{transform-box:fill-box;transform-origin:center;animation:zd-hexa-lg-star 24s ease infinite,zd-hexa-lg-tw 2.4s ease-in-out infinite;}
+/* red YouTube icon <-> green flag; the ivory play triangle stays put throughout. */
+@keyframes zd-hexa-lg-skin{0%,4%{fill:#FF0000;stroke:#c40000;}12%,88%{fill:#009C3B;stroke:#06331d;}96%,100%{fill:#FF0000;stroke:#c40000;}}
+/* losango + circle bloom in (slightly staggered) as the field turns green. */
+@keyframes zd-hexa-lg-diaA{0%,5%{transform:scale(.15);opacity:0;}11%{transform:scale(1.14);opacity:1;}14%,88%{transform:scale(1);opacity:1;}94%,100%{transform:scale(.15);opacity:0;}}
+@keyframes zd-hexa-lg-diaB{0%,7%{transform:scale(.15);opacity:0;}12%{transform:scale(1.16);opacity:1;}15%,88%{transform:scale(1);opacity:1;}93%,100%{transform:scale(.15);opacity:0;}}
+/* the 6 hexa stars pop after the flag forms, then twinkle out of phase. */
+@keyframes zd-hexa-lg-star{0%,9%{transform:scale(0) rotate(-25deg);}14%{transform:scale(1.35) rotate(4deg);}17%,87%{transform:scale(1) rotate(0);}92%,100%{transform:scale(0) rotate(-25deg);}}
+@keyframes zd-hexa-lg-tw{0%,100%{opacity:1;}50%{opacity:.6;}}
+@keyframes zd-hexa-lg-gloss{0%,8%{opacity:0;}14%,85%{opacity:.12;}92%,100%{opacity:0;}}
+/* gentle flutter, only while it is a flag (pinned at the hoist = left edge). */
+@keyframes zd-hexa-lg-wave{0%,12%{transform:rotate(0) skewY(0);}20%{transform:rotate(-2deg) skewY(1.3deg);}32%{transform:rotate(1.5deg) skewY(-1.2deg);}44%{transform:rotate(-1.5deg) skewY(1.1deg);}56%{transform:rotate(1.4deg) skewY(-1.1deg);}68%{transform:rotate(-1.3deg) skewY(1deg);}80%{transform:rotate(1.2deg) skewY(-1deg);}88%,100%{transform:rotate(0) skewY(0);}}
+/* two shine sweeps across the flag during the rest. */
+@keyframes zd-hexa-lg-glint{0%,18%{transform:translateX(-90px);}30%{transform:translateX(200px);}30.01%,55%{transform:translateX(-90px);}68%{transform:translateX(200px);}68.01%,100%{transform:translateX(-90px);}}
+/* GOAL boost: the flag flutters hard for a few seconds when Brazil scores. */
+.zd-hexa-lg-flag.zd-hexa-logo-gol{animation:zd-hexa-lg-golwave 1s ease-in-out infinite;}
+@keyframes zd-hexa-lg-golwave{0%,100%{transform:rotate(-3deg) skewY(2.2deg);}50%{transform:rotate(3deg) skewY(-2.2deg);}}
+
 /* ===== FULL THEME (opt-in sub-toggle .zd-hexa-full, OFF by default) =============
    The broad green repaint of the whole page (backgrounds, buttons, chips, chat).
    Behind a flag so it never applies by default — it is the loudest, most
    "YouTube-looking" part, so it stays a deliberate choice. */
-html.${ROOT_CLASS}.${FULL_CLASS}{
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}){
   --yt-spec-base-background:#04140A!important;
   --yt-spec-raised-background:#0A2414!important;
   --yt-spec-menu-background:#0A2414!important;
@@ -81,19 +119,19 @@ html.${ROOT_CLASS}.${FULL_CLASS}{
   --yt-spec-10-percent-layer:#1A4028!important;
   --yt-brand-youtube-red:#009C3B!important;
 }
-html.${ROOT_CLASS}.${FULL_CLASS},html.${ROOT_CLASS}.${FULL_CLASS} body,html.${ROOT_CLASS}.${FULL_CLASS} ytd-app{
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}),html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) body,html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) ytd-app{
   background:#04140A!important;transition:background-color .3s ease;
 }
-html.${ROOT_CLASS}.${FULL_CLASS} #masthead-container,html.${ROOT_CLASS}.${FULL_CLASS} ytd-masthead{
-  background:#02391C!important;transition:background-color .3s ease;
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) #masthead-container,html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) ytd-masthead{
+  background:#02391C!important;border-bottom:1px solid #009C3B!important;transition:background-color .3s ease;
 }
-html.${ROOT_CLASS}.${FULL_CLASS} .yt-spec-button-shape-next--filled,
-html.${ROOT_CLASS}.${FULL_CLASS} #subscribe-button button,
-html.${ROOT_CLASS}.${FULL_CLASS} #subscribe-button tp-yt-paper-button{background:#009C3B!important;color:#FFF6D5!important;}
-html.${ROOT_CLASS}.${FULL_CLASS} yt-chip-cloud-chip-renderer[selected],
-html.${ROOT_CLASS}.${FULL_CLASS} yt-chip-cloud-chip-renderer[aria-selected="true"]{background:#009C3B!important;color:#04140A!important;}
-html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-text-message-renderer #author-name,
-html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-author-chip #author-name{color:#FFE44D!important;}
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) .yt-spec-button-shape-next--filled,
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) #subscribe-button button,
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) #subscribe-button tp-yt-paper-button{background:#009C3B!important;color:#FFF6D5!important;}
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) yt-chip-cloud-chip-renderer[selected],
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) yt-chip-cloud-chip-renderer[aria-selected="true"]{background:#009C3B!important;color:#04140A!important;}
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) yt-live-chat-text-message-renderer #author-name,
+html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) yt-live-chat-author-chip #author-name{color:#FFE44D!important;}
 
 /* ===== Decorative nodes (injected by this module while active) ===== */
 /* Shaped like YouTube's own masthead buttons (e.g. +Criar): 36px pill, so it
@@ -124,6 +162,8 @@ html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-author-chip #author-name{color:#FF
 .zd-hexa-gol:active{transform:scale(.96);}
 .zd-hexa-gol:focus-visible{outline:3px solid #FFF6D5;outline-offset:2px;}
 @keyframes zd-hexa-golpulse{0%,100%{box-shadow:0 2px 10px rgba(255,223,0,.3);}50%{box-shadow:0 2px 16px rgba(255,223,0,.6);}}
+.zd-hexa-gol-icon{flex:none;display:block;}
+.zd-hexa-gol-label{line-height:1;}
 .zd-hexa-toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);
   z-index:2147483646;display:flex;align-items:center;gap:8px;padding:11px 17px;
@@ -192,19 +232,33 @@ html.${ROOT_CLASS}.${FULL_CLASS} yt-live-chat-author-chip #author-name{color:#FF
   outline:2px solid #FFF6D5;outline-offset:2px;
 }
 
-/* NEVER cover a fullscreen video. The fixed overlays live under the page root, so
-   when YouTube makes html/ytd-app the fullscreen element they'd render on top of
-   the game — hide them entirely while fullscreen (two rules so an unknown pseudo
-   can't invalidate the other). */
+/* ===== Fullscreen: NEVER cover a fullscreen video. Two complementary nets =====
+   (1) botelllhx's CSS :fullscreen net — hides the fixed overlays via the pseudo
+   directly (two rules so an unknown pseudo can't invalidate the other). */
 :fullscreen :is(.zd-hexa-bunting,.zd-hexa-boot,.zd-hexa-confetti,.zd-hexa-toast,.zd-hexa-invite){display:none!important;}
 :-webkit-full-screen :is(.zd-hexa-bunting,.zd-hexa-boot,.zd-hexa-confetti,.zd-hexa-toast,.zd-hexa-invite){display:none!important;}
+/* (2) The .zd-hexa-fs class (JS-toggled on fullscreenchange) hides EVERY decorative
+   node — incl. the logo flag/stars — and, above, gates the player accents with
+   :not(.zd-hexa-fs) so the bar/badge also go native (theme fully inert in FS). */
+html.${FS_CLASS} .zd-hexa-bunting,
+html.${FS_CLASS} .zd-hexa-badge,
+html.${FS_CLASS} .zd-hexa-gol,
+html.${FS_CLASS} .zd-hexa-lg-flag,
+html.${FS_CLASS} .zd-hexa-lg-stars,
+html.${FS_CLASS} .zd-hexa-toast,
+html.${FS_CLASS} .zd-hexa-invite,
+html.${FS_CLASS} .zd-hexa-confetti,
+html.${FS_CLASS} .zd-hexa-boot{display:none!important;}
 
 /* ===== Accessibility: honor reduced motion & forced colors ===== */
 @media (prefers-reduced-motion: reduce){
-  html.${ROOT_CLASS}.${FULL_CLASS},html.${ROOT_CLASS}.${FULL_CLASS} body,html.${ROOT_CLASS}.${FULL_CLASS} ytd-app,
-  html.${ROOT_CLASS}.${FULL_CLASS} #masthead-container,html.${ROOT_CLASS}.${FULL_CLASS} ytd-masthead{transition:none!important;}
+  html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}),html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) body,html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) ytd-app,
+  html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) #masthead-container,html.${ROOT_CLASS}.${FULL_CLASS}:not(.${FS_CLASS}) ytd-masthead{transition:none!important;}
   .zd-hexa-badge,.zd-hexa-gol,.zd-hexa-toast{animation:none!important;}
   .zd-hexa-bunting{animation:none!important;}
+  /* Logo settles into a still Brazil flag (its base state), no morph/flutter. */
+  .zd-hexa-lg-flag,.zd-hexa-lg-skin,.zd-hexa-lg-dia,.zd-hexa-lg-circ,.zd-hexa-lg-gloss,.zd-hexa-lg-star{animation:none!important;}
+  .zd-hexa-lg-glint{display:none!important;}
   html.${ROOT_CLASS} .ytp-play-progress{animation:none!important;}
   .zd-hexa-toast{transition:none!important;}
   .zd-hexa-invite{transition:none!important;opacity:1!important;transform:translateX(-50%)!important;}
@@ -219,16 +273,31 @@ const reduceMotion = () =>
     typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const isFullscreen = () =>
+    !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+// Reflect the current fullscreen state onto <html> so the FS_CLASS rules apply.
+function syncFullscreen() {
+    document.documentElement.classList.toggle(FS_CLASS, isFullscreen());
+}
+
 let installed = false;
 let active = false;
 let keepAlive = null;              // re-attaches decorative nodes after re-renders
 let inviteTimer = null;            // auto-dismiss timer for the opt-in invite
-const nodes = { badgeMast: null, bunting: null, gol: null, invite: null };
+const nodes = { badgeMast: null, bunting: null, gol: null, logo: null, logoStars: null, invite: null };
+let logoHidden = [];               // YouTube logo <path>s we hid, to restore on deactivate
+let logoSvg = null;                // YouTube's logo <svg> we swapped into (to reset overflow)
 
 /** Insert the dormant <style> once. Cheap; does nothing on repeat calls. */
 export function install() {
     if (installed) return;
     installed = true;
+    // Track fullscreen so the theme can go inert in it (added once; harmless
+    // while the theme is off — the FS_CLASS rules only bite alongside .zd-hexa).
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncFullscreen);
+    syncFullscreen();
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -330,6 +399,7 @@ function ensureNodes() {
     ensureMastheadBadge();
     ensureBunting();
     ensureGolButton();
+    ensureLogoFlag();
 }
 
 function buildBunting() {
@@ -352,17 +422,115 @@ function ensureMastheadBadge() {
     host.insertBefore(nodes.badgeMast, host.firstChild);
 }
 
+// A small line-style soccer ball (a real icon, not an emoji), tinted to the button
+// text via currentColor. Built as SVG DOM (no innerHTML) like the rest of the theme.
+function buildGolIcon() {
+    const svg = svgEl('svg', { class: 'zd-hexa-gol-icon', viewBox: '0 0 24 24', width: 16, height: 16, 'aria-hidden': 'true' });
+    svg.appendChild(svgEl('circle', { cx: 12, cy: 12, r: 9.4, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6 }));
+    svg.appendChild(svgEl('polygon', { points: '12,7.5 16.28,10.61 14.64,15.64 9.36,15.64 7.72,10.61', fill: 'currentColor' }));
+    const seams = [[12, 7.5, 12, 2.6], [16.28, 10.61, 21, 9.1], [14.64, 15.64, 17.55, 19.6], [9.36, 15.64, 6.45, 19.6], [7.72, 10.61, 3, 9.1]];
+    for (const [x1, y1, x2, y2] of seams) {
+        svg.appendChild(svgEl('line', { x1, y1, x2, y2, stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' }));
+    }
+    return svg;
+}
+
 function ensureGolButton() {
     if (nodes.gol && nodes.gol.isConnected) return;
     // Watch action row (Like/Share/Save). GOL goes first, to the left of Like.
     const host = document.querySelector('#top-level-buttons-computed');
     if (!host) return;
-    const btn = make('button', 'zd-hexa-gol', '⚽ GOL!');
+    const btn = make('button', 'zd-hexa-gol');
     btn.type = 'button';
     btn.setAttribute('aria-label', 'Comemorar gol do Brasil');
-    btn.addEventListener('click', fireConfetti);
+    btn.append(buildGolIcon(), make('span', 'zd-hexa-gol-label', 'GOL!'));
+    btn.addEventListener('click', () => celebrateGoal());
     nodes.gol = btn;
     host.insertBefore(btn, host.firstChild);
+}
+
+// --- Animated logo (SVG built via createElementNS — innerHTML is a TrustedTypes
+// sink on YouTube, so the whole flag is assembled node-by-node). ----------------
+const SVG_NS = 'http://www.w3.org/2000/svg';
+// A 5-point star (outer radius 5.5) centered on (0,0); placed + shrunk via a
+// translate+scale on its wrapper <g>.
+const LG_STAR_PTS = '0,-5.5 1.4,-1.9 5.2,-1.7 2.3,0.7 3.2,4.5 0,2.4 -3.2,4.5 -2.3,0.7 -5.2,-1.7 -1.4,-1.9';
+// The 6 hexa stars arc as a crown across the WHOLE logo (emblem + wordmark), so they
+// live in the parent logo <svg> (93x20 space), floating just above it (negative y).
+// [x, y, twinkle-delay]; each is scaled down by LG_STAR_SCALE from the 5.5 radius.
+const LG_STAR_SCALE = 0.36;
+const LG_STARS = [[8, -1.2, '0s'], [24, -2.8, '.5s'], [39, -3.8, '.9s'], [55, -3.8, '.3s'], [70, -2.8, '.8s'], [86, -1.2, '1.2s']];
+
+function svgEl(tag, attrs) {
+    const n = document.createElementNS(SVG_NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+}
+
+// The flag artwork, as a nested <svg> sized to the icon slot (x 0..29, y 0..20 of
+// YouTube's 93x20 logo). Green field, yellow losango, blue globe, the shared ivory
+// play triangle, a gloss + shine. The stars are separate (buildLogoStars), so they
+// can arc over the whole logo. Animation is 100% CSS.
+function buildLogoFlag() {
+    const svg = svgEl('svg', { class: 'zd-hexa-lg-flag', x: 0, y: 0, width: 29, height: 20, viewBox: '0 0 128 90', role: 'img', 'aria-label': 'Brasil rumo ao hexa' });
+    const defs = svgEl('defs');
+    const clip = svgEl('clipPath', { id: 'zd-hexa-lg-clip' });
+    clip.appendChild(svgEl('rect', { x: 5, y: 5, width: 118, height: 80, rx: 24 }));
+    defs.appendChild(clip);
+    svg.appendChild(defs);
+    svg.appendChild(svgEl('rect', { class: 'zd-hexa-lg-skin', x: 5, y: 5, width: 118, height: 80, rx: 24, fill: '#009C3B', stroke: '#06331d', 'stroke-width': 5 }));
+    const g = svgEl('g', { 'clip-path': 'url(#zd-hexa-lg-clip)' });
+    g.appendChild(svgEl('ellipse', { class: 'zd-hexa-lg-gloss', cx: 42, cy: 24, rx: 40, ry: 16, fill: '#ffffff', opacity: '.12' }));
+    g.appendChild(svgEl('polygon', { class: 'zd-hexa-lg-dia', points: '64,17 109,45 64,73 19,45', fill: '#FFDF00', stroke: '#06331d', 'stroke-width': 4, 'stroke-linejoin': 'round' }));
+    g.appendChild(svgEl('circle', { class: 'zd-hexa-lg-circ', cx: 64, cy: 45, r: 19, fill: '#002776', stroke: '#06331d', 'stroke-width': 4 }));
+    g.appendChild(svgEl('polygon', { points: '57,33 57,57 79,45', fill: '#ffffff', 'stroke-linejoin': 'round' }));
+    g.appendChild(svgEl('polygon', { class: 'zd-hexa-lg-glint', points: '-20,0 20,0 4,90 -36,90', fill: '#ffffff', opacity: '.22' }));
+    svg.appendChild(g);
+    return svg;
+}
+
+// The 6 hexa stars as a crown over the WHOLE logo — a <g> injected into the parent
+// logo <svg> (93x20 space), so the arc spans the emblem AND the "YouTube" wordmark.
+// They pop + twinkle in sync with the morph but do not flutter with the flag.
+function buildLogoStars() {
+    const group = svgEl('g', { class: 'zd-hexa-lg-stars' });
+    for (const [x, y, delay] of LG_STARS) {
+        const sg = svgEl('g', { transform: `translate(${x},${y}) scale(${LG_STAR_SCALE})` });
+        sg.appendChild(svgEl('polygon', {
+            class: 'zd-hexa-lg-star', points: LG_STAR_PTS,
+            fill: '#FFDF00', stroke: '#5c4600', 'stroke-width': 1.1, 'stroke-linejoin': 'round',
+            style: `animation-delay:0s,${delay}`,
+        }));
+        group.appendChild(sg);
+    }
+    return group;
+}
+
+// Swap the flag into YouTube's own logo <svg> (reusing its real "YouTube" wordmark),
+// hiding just the icon paths. YouTube renders the logo as one <svg viewBox="0 0 93
+// 20"> whose left ~29 units are the red icon + play triangle and whose paths from
+// x~31 on are the wordmark. We hide the icon paths and nest the flag in their slot.
+function ensureLogoFlag() {
+    if (nodes.logo && nodes.logo.isConnected) return;
+    const renderer = document.querySelector('ytd-topbar-logo-renderer');
+    if (!renderer) return;
+    // The visible logo (YouTube keeps hidden variants around for yoodles/lottie).
+    const logo = [...renderer.querySelectorAll('svg')].find(s => {
+        if ((s.getAttribute('viewBox') || '').replace(/\s+/g, ' ').trim() !== '0 0 93 20') return false;
+        return s.checkVisibility ? s.checkVisibility() : !s.closest('[hidden]');
+    });
+    if (!logo) return;                        // logo not rendered as inline SVG (yet) — retry next tick
+    logoHidden = [];
+    logo.querySelectorAll('path').forEach(p => {
+        let bb; try { bb = p.getBBox(); } catch { return; }   // needs the path laid out
+        if (bb.width && bb.x < 30) { p.setAttribute('display', 'none'); logoHidden.push(p); }
+    });
+    nodes.logo = buildLogoFlag();
+    logo.appendChild(nodes.logo);             // nested in the icon slot; wordmark untouched
+    nodes.logoStars = buildLogoStars();
+    logo.appendChild(nodes.logoStars);        // crown arcing over emblem + wordmark
+    logo.style.overflow = 'visible';          // let the crown float above the logo box
+    logoSvg = logo;
 }
 
 function removeNodes() {
@@ -371,20 +539,27 @@ function removeNodes() {
     }
     clearTimeout(inviteTimer);
     inviteTimer = null;
+    clearTimeout(goalWaveTimer);       // stop any in-flight goal celebration
+    goalWaveTimer = null;
+    goalLayer = null;
+    clearTimeout(golLogoTimer);        // the flag node itself is removed above
+    golLogoTimer = null;
+    for (const p of logoHidden) p.removeAttribute('display');   // un-hide YouTube's own icon
+    logoHidden = [];
+    if (logoSvg) { logoSvg.style.overflow = ''; logoSvg = null; }
+
     document.querySelectorAll('.zd-hexa-confetti,.zd-hexa-toast,.zd-hexa-invite').forEach(n => n.remove());
 }
 
-// Goal celebration — explicit, user-triggered via the GOL! button. Skipped
-// entirely under reduced-motion (and the button is CSS-hidden there too).
-function fireConfetti() {
-    if (reduceMotion()) return;
-    const layer = make('div', 'zd-hexa-confetti');
+// One wave of confetti pieces appended to an existing layer: a mix of little
+// Brazil flags, tricolor pennants, and flat flag-coloured bits.
+function spawnConfettiWave(layer, n) {
     const colors = ['#009C3B', '#FFDF00', '#002776'];   // flag colors, no ivory
     const TRICOLOR = 'linear-gradient(#009C3B 0 33%,#FFDF00 33% 66%,#002776 66% 100%)';
-    for (let i = 0; i < 46; i++) {
+    for (let i = 0; i < n; i++) {
         const p = document.createElement('i');
         p.style.left = Math.random() * 100 + 'vw';
-        const r = i % 5;
+        const r = Math.floor(Math.random() * 5);
         if (r === 0) {                                  // little Brazil flag
             p.className = 'zd-hexa-bandeira';
         } else if (r === 1) {                           // tricolor pennant
@@ -394,23 +569,64 @@ function fireConfetti() {
             p.style.background = colors[i % colors.length];
         }
         p.style.animationDuration = (1.4 + Math.random() * 1.0) + 's';
-        p.style.animationDelay = (Math.random() * 0.25) + 's';
+        p.style.animationDelay = (Math.random() * 0.2) + 's';
         layer.appendChild(p);
     }
-    document.body.appendChild(layer);
-    setTimeout(() => layer.remove(), 2800);
+}
+
+let goalLayer = null;      // active goal-celebration confetti layer
+let goalWaveTimer = null;  // timer emitting successive waves
+let goalStopAt = 0;        // wall-clock ms at which to stop emitting
+let golLogoTimer = null;   // clears the logo's hard-flutter boost after a goal
+
+/**
+ * GOAL celebration — releases confetti CONTINUOUSLY for `durationMs` (default
+ * 3s), emitting a fresh wave every ~200ms rather than one single burst. Called
+ * on the GOL! button and on a detected goal (chat-volume spike). Re-triggering
+ * while it runs just extends the end time (no pile-up). Skipped when the theme
+ * is off or under reduced motion (the button is CSS-hidden there too).
+ * @param {number} [durationMs]
+ */
+export function celebrateGoal(durationMs = 3000) {
+    if (!active || reduceMotion() || isFullscreen()) return;
+    goalStopAt = Date.now() + durationMs;
+    // Kick the logo flag into a hard flutter for the celebration (refreshed on re-trigger).
+    if (nodes.logo) {
+        nodes.logo.classList.add('zd-hexa-logo-gol');
+        clearTimeout(golLogoTimer);
+        golLogoTimer = setTimeout(() => {
+            golLogoTimer = null;
+            if (nodes.logo) nodes.logo.classList.remove('zd-hexa-logo-gol');
+        }, durationMs);
+    }
+    if (goalWaveTimer) return;                 // already celebrating — end time extended above
+    goalLayer = make('div', 'zd-hexa-confetti');
+    document.body.appendChild(goalLayer);
+    const wave = () => {
+        if (goalLayer) spawnConfettiWave(goalLayer, 16);
+        if (Date.now() < goalStopAt) {
+            goalWaveTimer = setTimeout(wave, 200);
+        } else {
+            goalWaveTimer = null;
+            const layer = goalLayer;
+            goalLayer = null;
+            if (layer) setTimeout(() => layer.remove(), 2800);  // let the last pieces fall
+        }
+    };
+    wave();
 }
 
 // One-shot "boot" flash on activation: a tricolor that resolves blur -> sharp,
 // then clears (the page putting on the jersey). Skipped under reduced motion.
 function playBoot() {
-    if (reduceMotion()) return;
+    if (reduceMotion() || isFullscreen()) return;
     const b = make('div', 'zd-hexa-boot');
     document.body.appendChild(b);
     setTimeout(() => b.remove(), 850);
 }
 
 function showToast(text) {
+    if (isFullscreen()) return;   // no pop-ups over a fullscreen game
     const t = make('div', 'zd-hexa-toast', '🇧🇷 ' + (text || 'Modo Hexa ativado'));
     document.body.appendChild(t);
     requestAnimationFrame(() => t.classList.add('zd-hexa-in'));

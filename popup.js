@@ -217,7 +217,7 @@ function renderHexa() {
     $('#hexa-title').textContent = L.hexaSectionTitle;
     const rows = $('#hexa-rows');
     rows.append(buildRow({ label: L.hexaSuggestLabel, control: buildHexaToggle(common.hexaSuggestKey, true) }));
-    rows.append(buildRow({ label: L.hexaFullLabel, control: buildHexaToggle(common.hexaFullKey, false) }));
+    rows.append(buildRow({ label: L.hexaFullLabel, control: buildHexaToggle(common.hexaFullKey, true) }));
 }
 
 function renderAdvancedToggle() {
